@@ -21,19 +21,17 @@ $opts = {
 
 # soapdt.config file only generated on first run
 def setup_soap(l, r)
-  if $firstrun
-    # make config file
-    rf = $opts[:readformat] == 'fastq' ? 'q' : 'f'
-    File.open("soapdt.config", "w") do |conf|
-      conf.puts "max_rd_len=20000"
-      conf.puts "[LIB]"
-      conf.puts "avg_ins=#{$opts[:insertsize]}"
-      conf.puts "reverse_seq=0"
-      conf.puts "asm_flags=3"
-      conf.puts "rank=2"
-      conf.puts "#{rf}1=#{l}"
-      conf.puts "#{rf}2=#{r}"
-    end
+  # make config file
+  rf = $opts[:readformat] == 'fastq' ? 'q' : 'f'
+  File.open("soapdt.config", "w") do |conf|
+    conf.puts "max_rd_len=20000"
+    conf.puts "[LIB]"
+    conf.puts "avg_ins=#{$opts[:insertsize]}"
+    conf.puts "reverse_seq=0"
+    conf.puts "asm_flags=3"
+    conf.puts "rank=2"
+    conf.puts "#{rf}1=#{l}"
+    conf.puts "#{rf}2=#{r}"
   end
 end
 
@@ -117,7 +115,7 @@ Dir.chdir('outputdata') do
     end
     # assembly decides the directory group in which output file will be placed
     groupceil = (out / GROUPSIZE).ceil * GROUPSIZE
-    destdir = "#{groupceil - (GROUPSIZE-1)}-#{groupceil}"
+    destdir = "#{(groupceil - (GROUPSIZE-1)).to_i}-#{groupceil.to_i}"
     # create the directory group (if not exist)
     Dir.mkdir(destdir) unless File.directory?(destdir)
     # create output file for out of current assembly number from soapdt
