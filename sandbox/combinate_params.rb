@@ -19,9 +19,7 @@ $opts = {
   :insertsize => 200
 }
 
-# soapdt.config file onlyl generated on first run
-$firstrun = true
-
+# soapdt.config file only generated on first run
 def setup_soap(l, r)
   if $firstrun
     # make config file
@@ -36,7 +34,6 @@ def setup_soap(l, r)
       conf.puts "#{rf}1=#{l}"
       conf.puts "#{rf}2=#{r}"
     end
-    $firstrun = false
   end
 end
 
@@ -116,7 +113,7 @@ Dir.chdir('outputdata') do
     out = parr[0]
     # output progress
     if out%1000==0
-      puts "Currently on #{out} / #{$output_parameters.length}"
+      puts "Currently on #{out} / #{$output_parameters.length}. This run took #{time}"
     end
     # assembly decides the directory group in which output file will be placed
     groupceil = (out / GROUPSIZE).ceil * GROUPSIZE
