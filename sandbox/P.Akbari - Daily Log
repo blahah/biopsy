@@ -8,3 +8,5 @@ Completed script to input sweep of algorithms to Soapdt, recieved further help f
 Next task: Analyse output of parameter sweep on Soapdt applying objective function to results to produce a optimisation algorithm which varies the input parameters.
 
 17/07/2013
+Parameter sweep algorithm written above completed as expected, output saved in outputdata folder.
+Wrote script (output_file_size_check.rb) to check select output file size for each of the assemblies. Used this to check scafSeq.gz sizes.
