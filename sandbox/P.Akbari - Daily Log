@@ -1,0 +1,10 @@
+P.Akbari - Daily Log
+15/07/2013
+With help from R.Smith set up environment and familiarised myself with the project and the SOAP Denovo Trans Algorithm (Soapdt)
+Current task: Produce a script to input a sweep of parameters to Soapdt
+
+16/07/2013
+Completed script to input sweep of algorithms to Soapdt, recieved further help from R.Smith
+Next task: Analyse output of parameter sweep on Soapdt applying objective function to results to produce a optimisation algorithm which varies the input parameters.
+
+17/07/2013
