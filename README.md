@@ -1,4 +1,4 @@
-bio-optiML
+biopsy
 ==========
 
 An automatic optimisation framework for bioinformatics.
