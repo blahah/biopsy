@@ -8,3 +8,10 @@ Completed script to input sweep of algorithms to Soapdt, recieved further help f
 Next task: Analyse output of parameter sweep on Soapdt applying objective function to results to produce a optimisation algorithm which varies the input parameters.
 
 17/07/2013
+Parameter sweep algorithm written above completed as expected, output saved in outputdata folder.
+
+Wrote script (output_file_size_check.rb) to check select output file size for each of the assemblies.
+	Results merged with outputdata/filenameToparameters.csv (produced by combinate_params.rb) in: outputdata/filenameToParameters_scafSeq.gzSizes.csv
+
+Currently writing script (leaff_scafSeq_extract.rb) to apply leaff algorithm on scafSeq files stored in outputdata folder. Response saved in: outputdata/leaff_output.csv
+	Using stored scafSeq.gz file sizes to prevent running empty scafSeq.gz files in leaff
