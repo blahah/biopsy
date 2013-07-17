@@ -15,7 +15,7 @@ $SOAP_file_path = '/bio_apps/SOAPdenovo-Trans1.02/SOAPdenovo-Trans-127mer'
 # options passed to SOAPdenovo
 $opts = {
   :readformat => 'fastq',
-  :threads => 6,
+  :threads => 1,
   :insertsize => 200
 }
 
@@ -118,7 +118,7 @@ Dir.chdir('outputdata') do
     destdir = "#{(groupceil - (GROUPSIZE-1)).to_i}-#{groupceil.to_i}"
     # create the directory group (if not exist)
     Dir.mkdir(destdir) unless File.directory?(destdir)
-    # create output file for out of current assembly number from soapdt
+    # create output file for output of current assembly number from soapdt
     Dir.mkdir("#{destdir}/#{out}") unless File.directory?("#{destdir}/#{out}")
     # loop through output files from soap and move output files to relevent directory
     Dir["#{out}.*"].each do |file|
