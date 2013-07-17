@@ -92,7 +92,7 @@ module BiOpSy
 
     def dimension_reduce(results)
       # calculate the weighted Euclidean distance from optimal
-      #d(p, q) = \sqrt{(p_1 - q_1)^2 + (p_2 - q_2)^2+...+(p_i - q_i)^2+...+(p_n - q_n)^2}
+      # d(p, q) = \sqrt{(p_1 - q_1)^2 + (p_2 - q_2)^2+...+(p_i - q_i)^2+...+(p_n - q_n)^2}
       # here the max value is sqrt(n) where n is no. of results, min value (optimum) is 0
       total = 0
       results.each_pair do |key, value|

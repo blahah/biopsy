@@ -54,7 +54,7 @@ class BadReadMappings < BiOpSy::ObjectiveFunction
     self.build_index
     unless File.exists? 'mappedreads.sam'
       # construct bowtie command
-      bowtiecmd = "bowtie2 -k 3 -p #{@threads} -X #{@realistic_dist} --no-unal --quiet #{@assembly_name} -1 ../#{@left_reads}"
+      bowtiecmd = "bowtie2 -k 3 -p #{@threads} -X #{@realistic_dist} --no-unal --fast-local --quiet #{@assembly_name} -1 ../#{@left_reads}"
       # paired end?
       bowtiecmd += " -2 ../#{@right_reads}" if @right_reads.length > 0
       # other functions may want the output, so we save it to file
