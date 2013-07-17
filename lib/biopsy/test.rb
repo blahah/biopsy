@@ -1,5 +1,5 @@
 # test Bioinformatic Optimisation System
-require_relative 'objectivehandler.rb'
+require_relative 'objectivehandler'
 require 'fileutils'
 require 'csv'
 
@@ -24,7 +24,7 @@ r = { "BadReadMappings"=>{:weighting=>1.0, :optimum=>0.0, :max=>1.0, :result=>1.
       "UnexpressedTranscripts"=>{:weighting=>1.0, :optimum=>0.0, :max=>33000.0, :result=>33000}
 }
   
-def test_dimension_reduction()
+def test_dimension_reduction(handler, r)
   # test how dimension-reduced value changes with varying inputs
   puts "exploring dimension reduction outputs"
   CSV.open('testdm.csv', 'w') do |out|
@@ -96,4 +96,5 @@ def test_k_sweep_soapdt(handler)
 end
 
 # run test sweep
-test_k_sweep_soapdt(handler)
+# test_k_sweep_soapdt(handler)
+test_dimension_reduction(handler, r)
