@@ -50,7 +50,7 @@ puts "Started"
 csv_file = CSV.open('outputdata/filenameToParameters_scafSeq.gzSizes.csv').each.map{ |l| l }
 # add headers to csv file where output is saved
 CSV.open("outputdata/leaff_output.csv", "ab") do |csv|
-  csv << ["assembly_fileid,numSeqs,n50,smallest,largest,totLen"]
+  csv << ["assembly_id","numSeqs","n50","smallest","largest","totLen"]
 end
 
 # loop through directories in outputdata
@@ -60,7 +60,7 @@ Dir.foreach('outputdata') do |directory_group|
   # loop through each directory in outputdata
   Dir.foreach("outputdata/#{directory_group}") do |outputfile|
     # provide progress output
-    puts "Currently on #{$assemblies_analysed}" if $assemblies_analysed%5000 == 0
+    puts "Currently on #{$assemblies_analysed}" if $assemblies_analysed%1000 == 0
     # skip directories . and .. (they are parent folders)
     next if outputfile == "." or outputfile == ".."
     # if csv file filenameToParameters_scafSeq.gz states file size is 34 or smaller don't apply leaff (34 is empty)
