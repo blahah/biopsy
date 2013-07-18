@@ -59,10 +59,13 @@ Dir.foreach('outputdata') do |directory_group|
   next if directory_group == '.' or directory_group == '..' or !File.directory?("outputdata/#{directory_group}")
   # loop through each directory in outputdata
   Dir.foreach("outputdata/#{directory_group}") do |outputfile|
+    # provide progress output
+    puts "Currently on #{$assemblies_analysed}" if $assemblies_analysed%5000 == 0
     # skip directories . and .. (they are parent folders)
     next if outputfile == "." or outputfile == ".."
     # if csv file filenameToParameters_scafSeq.gz states file size is 34 or smaller don't apply leaff (34 is empty)
     if csv_file[outputfile.to_i][9].to_i <= 34
+      # scafSeq is empty, still need to add assemblie into resultant csv file
       CSV.open("outputdata/leaff_output.csv", "ab") do |csv|
         csv << [outputfile]+[0,0,0,0,0]
       end
