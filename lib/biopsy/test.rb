@@ -7,21 +7,24 @@ require 'csv'
 # ~/experiments/assemblyoptimisation/denovo/testset
 
 # define a test assembly
-a = { :assembly => 'testset/test2.fa',
-      :reference => 'testset/ref.fa',
-      :assemblyname => 'test',  
-      :leftreads => 'testset/testl.fq',
-      :rightreads => 'testset/testr.fq',
-      :insertsize => 200,
-      :insertsd => 50 }
+a = { 
+  :assembly => 'testset/final.rice_out.unpadded.fasta',
+  :reference => 'testset/ref.fa',
+  :assemblyname => 'test',  
+  :leftreads => 'testset/l.pooled.keep.fq',
+  :rightreads => 'testset/r.pooled.keep.fq',
+  :insertsize => 200,
+  :insertsd => 50
+}
 
 # test objectivehandler
 handler = BiOpSy::ObjectiveHandler.new
 
 # test results
-r = { "BadReadMappings"=>{:weighting=>1.0, :optimum=>0.0, :max=>1.0, :result=>1.0}, 
-      "ReciprocalBestAnnotation"=>{:weighting=>1.0, :optimum=>26000.0, :max=>26000.0, :result=>0}, 
-      "UnexpressedTranscripts"=>{:weighting=>1.0, :optimum=>0.0, :max=>33000.0, :result=>33000}
+r = { 
+  "BadReadMappings"=>{:weighting=>1.0, :optimum=>0.0, :max=>1.0, :result=>1.0}, 
+  "ReciprocalBestAnnotation"=>{:weighting=>1.0, :optimum=>26000.0, :max=>26000.0, :result=>0}, 
+  "UnexpressedTranscripts"=>{:weighting=>1.0, :optimum=>0.0, :max=>33000.0, :result=>33000}
 }
   
 def test_dimension_reduction(handler, r)
@@ -43,10 +46,9 @@ def test_dimension_reduction(handler, r)
   puts "done"
 end
 
-def test_objectives_work()
+def test_objectives_work(handler, a)
   # confirm that all three objectives work for the test input
-  r = handler.run_for_assembly(a, 1)
-  p r
+  r = handler.run_for_assembly(a, 6, false, true)
 end
 
 def test_k_sweep_soapdt(handler)
@@ -97,4 +99,13 @@ end
 
 # run test sweep
 # test_k_sweep_soapdt(handler)
-test_dimension_reduction(handler, r)
+# test_dimension_reduction(handler, r)
+p test_objectives_work(handler, a)
+
+# Dir.chdir('e3abfb08bad0753603b33c8471c47af3') do
+#   require_relative 'objectives/bad_read_mappings'
+#   objective = BadReadMappings.new
+#   name = 'BadReadMappings'
+#   assembly = a
+#   p handler.run_objective(objective, name, assembly, 6)
+# end
