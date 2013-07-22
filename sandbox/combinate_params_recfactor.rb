@@ -47,7 +47,7 @@ class ParameterSweeper
           temporary_parameters.delete(temporary_parameters.keys.first)
         end
         t0 = Time.now
-        `/bio_apps/SOAPdenovo-Trans1.02/SOAPdenovo-Trans-127mer all -s soapdt.config -a 0.5 -o 2 -K 21 -p 1 -d 0 -F -M 0 -D 0 -L 200 -u -e 2 -t 7 > 2.log`
+        `#{constructor }> #{parr[0]}.log`
         time = Time.now - t0
         if !$?.success?
           log = Logger.new(STDOUT)
@@ -56,11 +56,10 @@ class ParameterSweeper
             abort()
           else
             log.warn("\n\tError experienced: #{$?}\n\tWhen running: #{constructor}")
-            abort('p1')
             next
           end
         end
-        abort('here')
+        
         # output progress
         if parr[0]%1000==0
           puts "Currently on #{parr[0]} / #{output_parameters.length}. This run took #{time}"
@@ -82,11 +81,12 @@ class ParameterSweeper
           file = file.gsub(/\.gz/, '')
           # move produced files to directory group
           FileUtils.mv("#{file}.gz", "#{destdir}/#{parr[0]}")
+          abort('here') if parr[0]%10==0
           # write parameters to filenameToParameters.csv which includes a reference of filename to parameters
           mutex = Mutex.new
           CSV.open("filenameToParameters.csv", "ab") do |csv|
             mutex.synchronize do
-             csv << [parr + time]
+             csv << parr + [time]
             end
           end
         end
