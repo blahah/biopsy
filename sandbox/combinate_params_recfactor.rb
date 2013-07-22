@@ -107,33 +107,19 @@ class ParameterSweeper
           # move produced files to directory group
           FileUtils.mv("#{file}.gz", "#{destdir}/#{parr[0]}")
           # write parameters to filenameToParameters.csv which includes a reference of filename to parameters
-          mutex = Mutex.new
-          CSV.open("filenameToParameters.csv", "ab") do |csv|
-            mutex.synchronize do
-             csv << parr + [time]
-            end
+          
+        end
+        mutex = Mutex.new
+        CSV.open("filenameToParameters.csv", "ab") do |csv|
+          mutex.synchronize do
+           csv << parr + [time]
           end
         end
+        abort('now')
       end
     end
   end
 
-  def run_soap()
-    cmd = "#{$SOAP_file_path} all"
-    cmd += " -s soapdt.config" # config file
-    cmd += " -a 0.5" # memory assumption
-    cmd += " -o #{parr[0] }" # parr[0] put directory
-    cmd += " -K #{kcap}" # kmer sizex`
-    cmd += " -p #{$opts[:threads]}" # number of threads
-    cmd += " -d #{d}" # minimum kmer frequency
-    cmd += " -F" # fill gaps in scaffold
-    cmd += " -M #{m}" # strength of contig flattening
-    cmd += " -D #{dcap}" # delete edges with coverage no greater than
-    cmd += " -L #{lcap}" # minimum contig length
-    cmd += " -u" # unmask high coverage contigs before scaffolding
-    cmd += " -e #{e}" # delete contigs with coverage no greater than
-    cmd += " -t #{t}" # maximum number of transcripts from one locus
- end
   # returns an array of arrays of input parameters
   def give_input_parameters
     return @input_parameters
