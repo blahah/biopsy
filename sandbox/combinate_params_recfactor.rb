@@ -33,43 +33,55 @@ class ParameterSweeper
       # generate the combinations of parameters to be applied to soapdt, stored in @input_parameters
       generate_configfile
       generate_combinations
-      #pp @input_combinations
       puts "Will perform #{@parameter_counter} assemblies"
       CSV.open("filenameToParameters.csv", "w") do |csv|
         csv << ['assembly_id'] + @input_parameters.keys + ['time']
       end
+
+      constructor = "#{$SOAP_file_path} all -s soapdt.config"
+      temporary_parameters = {:o => 10}.merge!(@input_parameters)
+      
       @input_combinations.each do |parr|
-        parr = parr.map {|v| }
+        parr.each do |v|
+          constructor += " -#{temporary_parameters.keys.first.to_s} #{v}"
+          temporary_parameters.delete(temporary_parameters.keys.first)
+
+        end
+        constructor += ""
+        
         t0 = Time.now
-        push parr
-       # `#{@constructor.send parr}`
+        `#{constructor} > #{parr[0]}.log`
+        #p $?.success?
+        #p $?
+        #puts "#{constructor} > #{parr[0]}.log"
         time = Time.now - t0
+        #abort('ere')
         # output progress
-        if out%1000==0
-          puts "Currently on #{out} / #{$output_parameters.length}. This run took #{time}"
+        if parr[0]%1000==0
+          puts "Currently on #{parr[0]} / #{output_parameters.length}. This run took #{time}"
         end
         # assembly decides the directory group in which output file will be placed
-        groupceil = (out / groupsize).ceil * groupsize
+        groupceil = (parr[0] / groupsize).ceil * groupsize
         destdir = "#{(groupceil - (groupsize-1)).to_i}-#{groupceil.to_i}"
         # create the directory group (if not exist)
         Dir.mkdir(destdir) unless File.directory?(destdir)
-        # create output file for output of current assembly number from soapdt
-        Dir.mkdir("#{destdir}/#{out}") unless File.directory?("#{destdir}/#{out}")
-        # loop through output files from soap and move output files to relevent directory
-        Dir["#{out}.*"].each do |file|
-          # Dir['#{.out}.*'] will grab the directory group file (destdir) of the first output in each destdir file and attempt to gzip
+        # create parr[0]put file for output of current assembly number from soapdt
+        Dir.mkdir("#{destdir}/#{parr[0]}") unless File.directory?("#{destdir}/#{parr[0]}")
+        # loop through output files from soap and move parr[0]put files to relevent directory
+        Dir["#{parr[0]}.*"].each do |file|
+          # Dir['#{.parr[0]}.*'] will grab the directory group file (destdir) of the first parr[0]put in each destdir file and attempt to gzip
           if file == destdir then
             next
           end
-          `gzip #{out}.* 2> /dev/null`
+          `gzip #{parr[0]}.* 2> /dev/null`
           file = file.gsub(/\.gz/, '')
           # move produced files to directory group
-          FileUtils.mv("#{file}.gz", "#{destdir}/#{out}")
+          FileUtils.mv("#{file}.gz", "#{destdir}/#{parr[0]}")
           # write parameters to filenameToParameters.csv which includes a reference of filename to parameters
           mutex = Mutex.new
           CSV.open("filenameToParameters.csv", "ab") do |csv|
             mutex.synchronize do
-             csv << parr + [time]
+             csv << [parr + time]
             end
           end
         end
@@ -81,7 +93,7 @@ class ParameterSweeper
     cmd = "#{$SOAP_file_path} all"
     cmd += " -s soapdt.config" # config file
     cmd += " -a 0.5" # memory assumption
-    cmd += " -o #{out}" # output directory
+    cmd += " -o #{parr[0] }" # parr[0] put directory
     cmd += " -K #{kcap}" # kmer sizex`
     cmd += " -p #{$opts[:threads]}" # number of threads
     cmd += " -d #{d}" # minimum kmer frequency
@@ -92,7 +104,7 @@ class ParameterSweeper
     cmd += " -u" # unmask high coverage contigs before scaffolding
     cmd += " -e #{e}" # delete contigs with coverage no greater than
     cmd += " -t #{t}" # maximum number of transcripts from one locus
-  end
+ end
   # returns an array of arrays of input parameters
   def give_input_parameters
     return @input_parameters
@@ -100,6 +112,7 @@ class ParameterSweeper
 
   # generate all the parameter combinations to be applied to soapdt
   def generate_combinations(index=0, opts={})
+
     if index == @input_parameters.length
 
       # save generated parameters
@@ -134,6 +147,8 @@ class ParameterSweeper
     @input_parameters.delete(:insertsize)
     @input_parameters.delete(:inputDataLeft)
     @input_parameters.delete(:inputDataRight)
+    # threads should be removed later
+    @input_parameters.delete(:threads)
   end
 end
 
