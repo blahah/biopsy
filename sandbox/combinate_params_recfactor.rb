@@ -2,6 +2,7 @@ require 'pp'
 require 'fileutils'
 require 'csv'
 require 'threach'
+require 'logger'
 
 $SOAP_file_path = '/bio_apps/SOAPdenovo-Trans1.02/SOAPdenovo-Trans-127mer'
 
@@ -20,7 +21,7 @@ class ParameterSweeper
 
     options.each do |key, value|
       if value.is_a? Array
-        @input_parameters[key.to_sym] = (1..5).to_a
+        @input_parameters[key.to_sym] = value.to_a
       else
         @input_parameters[key.to_sym] = [value]
       end
@@ -28,7 +29,7 @@ class ParameterSweeper
 
   end
 
-  def run(groupsize)
+  def run(groupsize, continue_on_crash=false)
     Dir.chdir('outputdata_refactor') do
       # generate the combinations of parameters to be applied to soapdt, stored in @input_parameters
       generate_configfile
@@ -37,25 +38,29 @@ class ParameterSweeper
       CSV.open("filenameToParameters.csv", "w") do |csv|
         csv << ['assembly_id'] + @input_parameters.keys + ['time']
       end
-
-      constructor = "#{$SOAP_file_path} all -s soapdt.config"
-      temporary_parameters = {:o => 10}.merge!(@input_parameters)
       
       @input_combinations.each do |parr|
+        constructor = "#{$SOAP_file_path} all -s soapdt.config -a 0.5"
+        temporary_parameters = {:o => nil}.merge!(@input_parameters)
         parr.each do |v|
           constructor += " -#{temporary_parameters.keys.first.to_s} #{v}"
           temporary_parameters.delete(temporary_parameters.keys.first)
-
         end
-        constructor += ""
-        
         t0 = Time.now
-        `#{constructor} > #{parr[0]}.log`
-        #p $?.success?
-        #p $?
-        #puts "#{constructor} > #{parr[0]}.log"
+        `/bio_apps/SOAPdenovo-Trans1.02/SOAPdenovo-Trans-127mer all -s soapdt.config -a 0.5 -o 2 -K 21 -p 1 -d 0 -F -M 0 -D 0 -L 200 -u -e 2 -t 7 > 2.log`
         time = Time.now - t0
-        #abort('ere')
+        if !$?.success?
+          log = Logger.new(STDOUT)
+          if continue_on_crash == false
+            log.fatal("\n\tFatal error experienced: #{$?}\n\tWhen running: #{constructor}")
+            abort()
+          else
+            log.warn("\n\tError experienced: #{$?}\n\tWhen running: #{constructor}")
+            abort('p1')
+            next
+          end
+        end
+        abort('here')
         # output progress
         if parr[0]%1000==0
           puts "Currently on #{parr[0]} / #{output_parameters.length}. This run took #{time}"
@@ -132,7 +137,7 @@ class ParameterSweeper
 
   def generate_configfile
     # make config file
-    rf = @input_parameters[:readformat] == 'fastq' ? 'q' : 'f'
+    rf = @input_parameters[:readformat] == ['fastq'] ? 'q' : 'f'
     File.open("soapdt.config", "w") do |conf|
       conf.puts "max_rd_len=20000"
       conf.puts "[LIB]"
@@ -158,10 +163,16 @@ ranges = {
   :insertsize => 200,
   :inputDataLeft => '../inputdata/l.fq',
   :inputDataRight => '../inputdata/r.fq',
-  :K => (3..5).to_a,
-  :d => (6..8).to_a, # KmerFreqCutoff: delete kmers with frequency no larger than (default 0)
-  :M => (0..2).to_a, # def 1, min 0, max 3 #k value
+  :K => (21..80).step(8).to_a,
+  :M => (0..3).to_a, # def 1, min 0, max 3 #k value
+  :d => (0..6).step(2).to_a, # KmerFreqCutoff: delete kmers with frequency no larger than (default 0)
+  :D => (0..6).step(2).to_a, # edgeCovCutoff: delete edges with coverage no larger than (default 1)
+  :G => (25..150).step(50).to_a, # gapLenDiff(default 50): allowed length difference between estimated and filled gap
+  :L => [200], # minLen(default 100): shortest contig for scaffolding
+  :e => (2..12).step(5).to_a, # contigCovCutoff: delete contigs with coverage no larger than (default 2)
+  :t => (2..12).step(5).to_a, # locusMaxOutput: output the number of transcriptome no more than (default 5) in one locus
+  :p => 1
 }
 
 soapdt = ParameterSweeper.new(ranges, "ra")
-soapdt.run(200.00)
+soapdt.run(200.00, true)
