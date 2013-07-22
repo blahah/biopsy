@@ -18,6 +18,12 @@ Currently writing script (leaff_scafSeq_extract.rb) to apply leaff algorithm on 
 
 ----18/07/2013----
 leaff_scafSeq_extract.rb finished
-Load data into r, merged the two csv files (outputdata/filenameToParameters_scafSeq.gzSizes.csv and outputdata/leaffoutput.csv)
+Load data into r, merged the two csv files (outputdata/filenameToParameters_scafSeq.gzSizes.csv and outputdata/leaffoutput.csv) saved as outputdata/merged_leaff_soapdt.csv
 Plotting and visualising data in R
-	
+
+----19/06/2013----
+Completed plotting of input params into soapdt and output from leaff
+Began refactor of combinate_params.rb code (in combinate_params_refactor.rb) to contain a ParameterSweeper class
+
+----22/06/2013----
+combinate_params.refactor.rb - nearly complete, adding constructor functionality
