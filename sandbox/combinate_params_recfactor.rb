@@ -17,8 +17,8 @@ class ParameterSweeper
     @parameter_counter = 1
     # input_combinations: an array of arrays of input parameters
     @input_combinations = []
-    # options contains both the parameter sweep values and other soapdt options, we want to seperate these
-
+    # convert all options to an array so it can be handled by the generate_combinations() method
+    # ..this is for users entering single values e.g 4 as a parameter
     options.each do |key, value|
       if value.is_a? Array
         @input_parameters[key.to_sym] = value.to_a
@@ -26,31 +26,56 @@ class ParameterSweeper
         @input_parameters[key.to_sym] = [value]
       end
     end
-
+    # clean input parameters:
+    # check the user has not submitted a o (output file) parameter as this will vary according to our wrapper
+    @input_parameters.delete(:o) if @input_parameters[:o]
+    # we found that passing multipule threads to the 'threach' module in the parameter sweep loop is faster than
+    # ..passing multipule threads to soapdt
+    # if the number of threads is set by the user pass this to @thread_number and remove it from parameter sweep
+    if @input_parameters[:p]
+      @thread_number = @input_parameters[:p] 
+      @input_parameters.delete(:p)
+    else
+      # if the number of threads is not set by user, default to one thread
+      @thread_number = 1
+    end
   end
 
   def run(groupsize, continue_on_crash=false)
     Dir.chdir('outputdata_refactor') do
-      # generate the combinations of parameters to be applied to soapdt, stored in @input_parameters
+      # generate the config file (soapdt.config) to be used by soapdt, exists in outputdata/
       generate_configfile
+      # generate the combinations of parameters to be applied to soapdt, stored in @input_parameters
       generate_combinations
       puts "Will perform #{@parameter_counter} assemblies"
+      # output headers to csv file
       CSV.open("filenameToParameters.csv", "w") do |csv|
         csv << ['assembly_id'] + @input_parameters.keys + ['time']
       end
-      
+      # loop through each parameter set
       @input_combinations.each do |parr|
+        # head of constructor file, to be run as bash command
         constructor = "#{$SOAP_file_path} all -s soapdt.config -a 0.5"
+        # to generate the constructor based only on parameters given to us by the user we need to loop through and delete
+        # keys from the @input_parameters hash, create a temporary_parameters hash to allow deletion without effecting further loops
         temporary_parameters = {:o => nil}.merge!(@input_parameters)
-        parr.each do |v|
-          constructor += " -#{temporary_parameters.keys.first.to_s} #{v}"
+        # parr is an array of the current parameter set, loop through parr
+        parr.each do |parameter|
+          # add each element of the current parameter set (parr) to the bash command
+          # temporary_parameters.keys.first, add the first key of the temporary_parameters hash to the bash, this should correspond with
+          # the parameter in parr currently being looped through
+          constructor += " -#{temporary_parameters.keys.first.to_s} #{parameter}"
+          # delete the key corresponding to the parameter we have just added
           temporary_parameters.delete(temporary_parameters.keys.first)
         end
+        # run soapdt and record time
         t0 = Time.now
         `#{constructor }> #{parr[0]}.log`
         time = Time.now - t0
+        # check for success in previous bash command
         if !$?.success?
           log = Logger.new(STDOUT)
+          # spit fatal error unless user has allowed continuation of sweep under crash
           if continue_on_crash == false
             log.fatal("\n\tFatal error experienced: #{$?}\n\tWhen running: #{constructor}")
             abort()
@@ -81,7 +106,6 @@ class ParameterSweeper
           file = file.gsub(/\.gz/, '')
           # move produced files to directory group
           FileUtils.mv("#{file}.gz", "#{destdir}/#{parr[0]}")
-          abort('here') if parr[0]%10==0
           # write parameters to filenameToParameters.csv which includes a reference of filename to parameters
           mutex = Mutex.new
           CSV.open("filenameToParameters.csv", "ab") do |csv|
@@ -117,7 +141,6 @@ class ParameterSweeper
 
   # generate all the parameter combinations to be applied to soapdt
   def generate_combinations(index=0, opts={})
-
     if index == @input_parameters.length
 
       # save generated parameters
@@ -159,7 +182,6 @@ end
 
 ranges = {
   :readformat => 'fastq',
-  :threads => 1,
   :insertsize => 200,
   :inputDataLeft => '../inputdata/l.fq',
   :inputDataRight => '../inputdata/r.fq',
@@ -171,7 +193,8 @@ ranges = {
   :L => [200], # minLen(default 100): shortest contig for scaffolding
   :e => (2..12).step(5).to_a, # contigCovCutoff: delete contigs with coverage no larger than (default 2)
   :t => (2..12).step(5).to_a, # locusMaxOutput: output the number of transcriptome no more than (default 5) in one locus
-  :p => 1
+  :p => 1,
+  :o => 'output'
 }
 
 soapdt = ParameterSweeper.new(ranges, "ra")
