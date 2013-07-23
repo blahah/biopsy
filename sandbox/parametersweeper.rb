@@ -104,14 +104,8 @@ class ParameterSweeper
            csv << parr.map{|key, value| value} + [time]
           end
         end
-        abort('now')
       end
     end
-  end
-
-  # returns an array of arrays of input parameters
-  def give_input_parameters
-    return @input_parameters
   end
 
   # generate all the parameter combinations to be applied to soapdt
