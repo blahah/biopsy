@@ -5,7 +5,7 @@ require 'objectivefunction.rb'
 
 class ReciprocalBestAnnotation < BiOpSy::ObjectiveFunction
 
-  def run(assemblydata, threads=24)
+  def run(assemblydata, threads=6)
     puts "running objective: ReciprocalBestAnnotation"
     @threads = threads
     # extract assembly data
@@ -21,7 +21,7 @@ class ReciprocalBestAnnotation < BiOpSy::ObjectiveFunction
 
   def rbusearch
     Dir.mkdir 'output'
-    `~/scripts/rbusearch/rbusearch.rb --query ../#{@assembly} --target ../#{@reference} --output output --cores #{@threads}`
-    return `grep "^[1-2]" output/bestmatches.rbu | wc -l`.to_i
+    `rbusearch --query ../#{@assembly} --target ../#{@reference} --output output --cores #{@threads}`
+    return `wc -l output/bestmatches.rbu`.to_i
   end
 end
