@@ -7,17 +7,19 @@ require 'logger'
 $SOAP_file_path = '/bio_apps/SOAPdenovo-Trans1.02/SOAPdenovo-Trans-127mer'
 
 soap_constructor = Proc.new { |input_hash|
-  # make config file
-  rf = $config_settings[:readformat] == 'fastq' ? 'q' : 'f'
-  File.open("soapdt.config", "w") do |conf|
-    conf.puts "max_rd_len=20000"
-    conf.puts "[LIB]"
-    conf.puts "avg_ins=#{$config_settings[:insertsize]}"
-    conf.puts "reverse_seq=0"
-    conf.puts "asm_flags=3"
-    conf.puts "rank=2"
-    conf.puts "#{rf}1=#{$config_settings[:inputDataLeft]}"
-    conf.puts "#{rf}2=#{$config_settings[:inputDataRight]}"
+  # make config file if doesn't already exist
+  if !File.exist?("soapdt.config")
+    rf = $config_settings[:readformat] == 'fastq' ? 'q' : 'f'
+    File.open("soapdt.config", "w") do |conf|
+      conf.puts "max_rd_len=20000"
+      conf.puts "[LIB]"
+      conf.puts "avg_ins=#{$config_settings[:insertsize]}"
+      conf.puts "reverse_seq=0"
+      conf.puts "asm_flags=3"
+      conf.puts "rank=2"
+      conf.puts "#{rf}1=#{$config_settings[:inputDataLeft]}"
+      conf.puts "#{rf}2=#{$config_settings[:inputDataRight]}"
+    end
   end
   constructor = "#{$SOAP_file_path} all -s soapdt.config"
   constructor += input_hash.map {|key, value| " -#{key} #{value}"}.join(",").gsub(",", "")
@@ -63,7 +65,7 @@ class ParameterSweeper
         csv << ['assembly_id'] + @input_parameters.keys + ['time']
       end
       # loop through each parameter set
-      @input_combinations.threach(@threads) do |parr|
+      @input_combinations.threach(3) do |parr|
         # generate the bash command by calling the constructor passed by the user
         cmd = @constructor.call(parr)
         # run soapdt and record time
@@ -156,7 +158,7 @@ ranges = {
   :e => (2..7).step(5).to_a, # contigCovCutoff: delete contigs with coverage no larger than (default 2)
   :t => (2..7).step(5).to_a, # locusMaxOutput: output the number of transcriptome no more than (default 5) in one locus
   :p => 1,
-  :threads => 3
+  :threads => 2
 }
 soapdt = ParameterSweeper.new(ranges, soap_constructor)
 soapdt.run(200.00, true)
