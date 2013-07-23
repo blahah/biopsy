@@ -22,6 +22,14 @@ class ParameterSweeper
     @parameter_counter = 1
     # input_combinations: an array of arrays of input parameters
     @input_combinations = []
+    # if the number of threads is set, update the global variable, if not default to 1
+    if @input_parameters[:threads]
+      @threads = @input_parameters[:threads]
+      # remove this key from the hash, otherwise it will be put under parameter sweep
+      @input_parameters.delete(:threads)
+    else
+      @threads = 1
+    end
     # convert all options to an array so it can be handled by the generate_combinations() method
     # ..this is for users entering single values e.g 4 as a parameter
     options.each do |key, value|
@@ -39,17 +47,14 @@ class ParameterSweeper
       generate_configfile
       # generate the combinations of parameters to be applied to soapdt, stored in @input_parameters
       generate_combinations
-
-      
       puts "Will perform #{@parameter_counter} assemblies"
-      
-
       # output headers to csv file
       CSV.open("filenameToParameters.csv", "w") do |csv|
         csv << ['assembly_id'] + @input_parameters.keys + ['time']
       end
       # loop through each parameter set
-      @input_combinations.each do |parr|
+      @input_combinations.threach(@threads) do |parr|
+        # generate the bash command by calling the constructor passed by the user
         cmd = @constructor.call(parr)
         # run soapdt and record time
         t0 = Time.now
@@ -95,6 +100,7 @@ class ParameterSweeper
         mutex = Mutex.new
         CSV.open("filenameToParameters.csv", "ab") do |csv|
           mutex.synchronize do
+            # map the parr hash to an array, a suitable format for csv
            csv << parr.map{|key, value| value} + [time]
           end
         end
@@ -144,8 +150,6 @@ class ParameterSweeper
     @input_parameters.delete(:insertsize)
     @input_parameters.delete(:inputDataLeft)
     @input_parameters.delete(:inputDataRight)
-    # threads should be removed later
-    @input_parameters.delete(:threads)
   end
 end
 
@@ -162,7 +166,8 @@ ranges = {
   :L => [200], # minLen(default 100): shortest contig for scaffolding
   :e => (2..7).step(5).to_a, # contigCovCutoff: delete contigs with coverage no larger than (default 2)
   :t => (2..7).step(5).to_a, # locusMaxOutput: output the number of transcriptome no more than (default 5) in one locus
-  :p => 1
+  :p => 1,
+  :threads => 6
 }
 
 soapdt = ParameterSweeper.new(ranges, soap_constructor)
