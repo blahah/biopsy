@@ -43,8 +43,6 @@ class ParameterSweeper
 
   def run(groupsize, continue_on_crash=false)
     Dir.chdir('outputdata_refactor') do
-      # generate the config file (soapdt.config) to be used by soapdt, exists in outputdata/
-      generate_configfile
       # generate the combinations of parameters to be applied to soapdt, stored in @input_parameters
       generate_combinations
       puts "Will perform #{@parameter_counter} assemblies"
@@ -104,6 +102,7 @@ class ParameterSweeper
            csv << parr.map{|key, value| value} + [time]
           end
         end
+        abort('now')
       end
     end
   end
@@ -126,32 +125,34 @@ class ParameterSweeper
       generate_combinations(index+1, opts)
     end
   end
-
-  def generate_configfile
-    # make config file
-    rf = @input_parameters[:readformat] == ['fastq'] ? 'q' : 'f'
-    File.open("soapdt.config", "w") do |conf|
-      conf.puts "max_rd_len=20000"
-      conf.puts "[LIB]"
-      conf.puts "avg_ins=#{@input_parameters[:insertsize][0]}"
-      conf.puts "reverse_seq=0"
-      conf.puts "asm_flags=3"
-      conf.puts "rank=2"
-      conf.puts "#{rf}1=#{@input_parameters[:inputDataLeft][0]}"
-      conf.puts "#{rf}2=#{@input_parameters[:inputDataRight][0]}"
-    end
-    @input_parameters.delete(:readformat)
-    @input_parameters.delete(:insertsize)
-    @input_parameters.delete(:inputDataLeft)
-    @input_parameters.delete(:inputDataRight)
-  end
 end
 
-ranges = {
+# create a config file, this function is specific to soapdt
+def generate_configfile(config_settings)
+  # make config file
+  rf = config_settings[:readformat] == 'fastq' ? 'q' : 'f'
+  File.open("soapdt.config", "w") do |conf|
+    conf.puts "max_rd_len=20000"
+    conf.puts "[LIB]"
+    conf.puts "avg_ins=#{config_settings[:insertsize]}"
+    conf.puts "reverse_seq=0"
+    conf.puts "asm_flags=3"
+    conf.puts "rank=2"
+    conf.puts "#{rf}1=#{config_settings[:inputDataLeft]}"
+    conf.puts "#{rf}2=#{config_settings[:inputDataRight]}"
+  end
+end
+config_settings = {
   :readformat => 'fastq',
   :insertsize => 200,
   :inputDataLeft => '../inputdata/l.fq',
-  :inputDataRight => '../inputdata/r.fq',
+  :inputDataRight => '../inputdata/r.fq'
+}
+generate_configfile(config_settings)
+
+
+
+ranges = {
   :K => (21..29).step(8).to_a,
   :M => (0..1).to_a, # def 1, min 0, max 3 #k value
   :d => (0..2).step(2).to_a, # KmerFreqCutoff: delete kmers with frequency no larger than (default 0)
@@ -163,6 +164,5 @@ ranges = {
   :p => 1,
   :threads => 6
 }
-
 soapdt = ParameterSweeper.new(ranges, soap_constructor)
 soapdt.run(200.00, true)
