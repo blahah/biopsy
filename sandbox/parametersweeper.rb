@@ -6,6 +6,7 @@ require 'logger'
 
 $SOAP_file_path = '/bio_apps/SOAPdenovo-Trans1.02/SOAPdenovo-Trans-127mer'
 
+# constructor specific to soap
 soap_constructor = Proc.new { |input_hash|
   # make config file if doesn't already exist
   if !File.exist?("soapdt.config")
@@ -55,6 +56,7 @@ class ParameterSweeper
     end
   end
 
+  # apply the parameter sweep on the algorithm and save results appropriately
   def run(groupsize, continue_on_crash=false)
     Dir.chdir('outputdata_refactor') do
       # generate the combinations of parameters to be applied to soapdt, stored in @input_parameters
@@ -65,7 +67,7 @@ class ParameterSweeper
         csv << ['assembly_id'] + @input_parameters.keys + ['time']
       end
       # loop through each parameter set
-      @input_combinations.threach(3) do |parr|
+      @input_combinations.threach(@threads) do |parr|
         # generate the bash command by calling the constructor passed by the user
         cmd = @constructor.call(parr)
         # run soapdt and record time
@@ -121,7 +123,7 @@ class ParameterSweeper
     end
   end
 
-  # generate all the parameter combinations to be applied to soapdt
+  # generate all the parameter combinations to be applied
   def generate_combinations(index=0, opts={})
     if index == @input_parameters.length
 
@@ -139,6 +141,7 @@ class ParameterSweeper
       generate_combinations(index+1, opts)
     end
   end
+
 end
 
 # config file settings specific to soapdt
@@ -148,6 +151,7 @@ $config_settings = {
   :inputDataLeft => '../inputdata/l.fq',
   :inputDataRight => '../inputdata/r.fq'
 }
+# ranges to be set by user
 ranges = {
   :K => (21..29).step(8).to_a,
   :M => (0..1).to_a, # def 1, min 0, max 3 #k value
@@ -161,4 +165,4 @@ ranges = {
   :threads => 2
 }
 soapdt = ParameterSweeper.new(ranges, soap_constructor)
-soapdt.run(200.00, true)
+soapdt.run(200.00)
