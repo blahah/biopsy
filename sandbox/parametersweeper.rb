@@ -5,7 +5,13 @@ require 'threach'
 require 'logger'
 
 $SOAP_file_path = '/bio_apps/SOAPdenovo-Trans1.02/SOAPdenovo-Trans-127mer'
-
+# config file settings specific to soapdt
+$config_settings = {
+  :readformat => 'fastq',
+  :insertsize => 200,
+  :inputDataLeft => '../inputdata/l.fq',
+  :inputDataRight => '../inputdata/r.fq'
+}
 # constructor specific to soap
 soap_constructor = Proc.new { |input_hash|
   # make config file if doesn't already exist
@@ -143,14 +149,6 @@ class ParameterSweeper
   end
 
 end
-
-# config file settings specific to soapdt
-$config_settings = {
-  :readformat => 'fastq',
-  :insertsize => 200,
-  :inputDataLeft => '../inputdata/l.fq',
-  :inputDataRight => '../inputdata/r.fq'
-}
 # ranges to be set by user
 ranges = {
   :K => (21..29).step(8).to_a,
