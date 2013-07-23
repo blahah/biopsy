@@ -122,7 +122,6 @@ class ParameterSweeper
            csv << parr.map{|key, value| value} + [time]
           end
         end
-        abort('now')
       end
     end
   end
@@ -147,6 +146,7 @@ class ParameterSweeper
   end
 
 end
+
 options = {
   # settings to be passed to the constructor
   :settings => {
