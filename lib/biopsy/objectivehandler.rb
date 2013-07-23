@@ -105,7 +105,7 @@ module BiOpSy
       return Math.sqrt(total) / results.length
     end
 
-    def run_for_assembly(assembly, threads=24, cleanup=true,allresults=false)
+    def run_for_assembly(assembly, threads=6, cleanup=true,allresults=false)
       # check assembly exists
       unless File.exists?(assembly[:assembly]) && `wc -l #{assembly[:assembly]}`.to_i > 0
         return nil
