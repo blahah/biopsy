@@ -6,17 +6,6 @@ require 'logger'
 
 $SOAP_file_path = '/bio_apps/SOAPdenovo-Trans1.02/SOAPdenovo-Trans-127mer'
 
-#def soap_constructor(opts)
-  # head of constructor file, to be run as bash command
-#  constructor = "#{$SOAP_file_path} all -s soapdt.config"
-  # to generate the constructor based only on parameters given to us by the user we need to loop through and delete
-  # keys from the opts hash, create a temporary_parameters hash to allow deletion without effecting further loops
-#  temporary_parameters = opts
-  # parr is an array of the current parameter set, loop through parr
-#  constructor += temporary_parameters.map{|key, value| " -#{key} #{value}"}.join(",").gsub(",", '')
-#  return constructor
-#end
-
 soap_constructor = Proc.new { |input_hash|
   constructor = "#{$SOAP_file_path} all -s soapdt.config"
   constructor += input_hash.map {|key, value| " -#{key} #{value}"}.join(",").gsub(",", "")
@@ -51,6 +40,7 @@ class ParameterSweeper
       # generate the combinations of parameters to be applied to soapdt, stored in @input_parameters
       generate_combinations
 
+      
       puts "Will perform #{@parameter_counter} assemblies"
       
 
@@ -63,7 +53,7 @@ class ParameterSweeper
         cmd = @constructor.call(parr)
         # run soapdt and record time
         t0 = Time.now
-        `#{cmd} > #{parr[0]}.log`
+        `#{cmd} > #{parr[:o]}.log`
         time = Time.now - t0
         # check for success in previous bash command
         if !$?.success?
@@ -79,39 +69,37 @@ class ParameterSweeper
         end
         
         # output progress
-        if parr[0]%1000==0
-          puts "Currently on #{parr[0]} / #{output_parameters.length}. This run took #{time}"
+        if parr[:o]%1000==0
+          puts "Currently on #{parr[:o]} / #{output_parameters.length}. This run took #{time}"
         end
         # assembly decides the directory group in which output file will be placed
-        groupceil = (parr[0] / groupsize).ceil * groupsize
+        groupceil = (parr[:o] / groupsize).ceil * groupsize
         destdir = "#{(groupceil - (groupsize-1)).to_i}-#{groupceil.to_i}"
         # create the directory group (if not exist)
         Dir.mkdir(destdir) unless File.directory?(destdir)
-        # create parr[0]put file for output of current assembly number from soapdt
-        Dir.mkdir("#{destdir}/#{parr[0]}") unless File.directory?("#{destdir}/#{parr[0]}")
-        # loop through output files from soap and move parr[0]put files to relevent directory
-        Dir["#{parr[0]}.*"].each do |file|
-          # Dir['#{.parr[0]}.*'] will grab the directory group file (destdir) of the first parr[0]put in each destdir file and attempt to gzip
+        # create output file for output of current assembly number from soapdt
+        Dir.mkdir("#{destdir}/#{parr[:o]}") unless File.directory?("#{destdir}/#{parr[:o]}")
+        # loop through output files from soap and move output files to relevent directory
+        Dir["#{parr[:o]}.*"].each do |file|
+          # Dir['#{.parr[:o]}.*'] will grab the directory group file (destdir) of the first output in each destdir file and attempt to gzip
           if file == destdir then
             next
           end
-          `gzip #{parr[0]}.* 2> /dev/null`
+          `gzip #{parr[:o]}.* 2> /dev/null`
           file = file.gsub(/\.gz/, '')
           # move produced files to directory group
-          FileUtils.mv("#{file}.gz", "#{destdir}/#{parr[0]}")
+          FileUtils.mv("#{file}.gz", "#{destdir}/#{parr[:o]}")
           # write parameters to filenameToParameters.csv which includes a reference of filename to parameters
           
         end
         mutex = Mutex.new
         CSV.open("filenameToParameters.csv", "ab") do |csv|
           mutex.synchronize do
-           csv << parr + [time]
+           csv << parr.map{|key, value| value} + [time]
           end
         end
         abort('now')
       end
-
-
     end
   end
 
@@ -166,16 +154,15 @@ ranges = {
   :insertsize => 200,
   :inputDataLeft => '../inputdata/l.fq',
   :inputDataRight => '../inputdata/r.fq',
-  :K => (21..80).step(8).to_a,
-  :M => (0..3).to_a, # def 1, min 0, max 3 #k value
-  :d => (0..6).step(2).to_a, # KmerFreqCutoff: delete kmers with frequency no larger than (default 0)
-  :D => (0..6).step(2).to_a, # edgeCovCutoff: delete edges with coverage no larger than (default 1)
-  :G => (25..150).step(50).to_a, # gapLenDiff(default 50): allowed length difference between estimated and filled gap
+  :K => (21..29).step(8).to_a,
+  :M => (0..1).to_a, # def 1, min 0, max 3 #k value
+  :d => (0..2).step(2).to_a, # KmerFreqCutoff: delete kmers with frequency no larger than (default 0)
+  :D => (0..2).step(2).to_a, # edgeCovCutoff: delete edges with coverage no larger than (default 1)
+  :G => (25..75).step(50).to_a, # gapLenDiff(default 50): allowed length difference between estimated and filled gap
   :L => [200], # minLen(default 100): shortest contig for scaffolding
-  :e => (2..12).step(5).to_a, # contigCovCutoff: delete contigs with coverage no larger than (default 2)
-  :t => (2..12).step(5).to_a, # locusMaxOutput: output the number of transcriptome no more than (default 5) in one locus
-  :p => 1,
-  :o => 'output'
+  :e => (2..7).step(5).to_a, # contigCovCutoff: delete contigs with coverage no larger than (default 2)
+  :t => (2..7).step(5).to_a, # locusMaxOutput: output the number of transcriptome no more than (default 5) in one locus
+  :p => 1
 }
 
 soapdt = ParameterSweeper.new(ranges, soap_constructor)
