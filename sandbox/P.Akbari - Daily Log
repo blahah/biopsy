@@ -26,4 +26,12 @@ Completed plotting of input params into soapdt and output from leaff
 Began refactor of combinate_params.rb code (in combinate_params_refactor.rb) to contain a ParameterSweeper class
 
 ----22/06/2013----
-combinate_params.refactor.rb - nearly complete, adding constructor functionality
+combinate_params_refactor.rb - nearly complete, adding constructor functionality
+
+----23/06/2013----
+combinate_params_refactor.rb RENAME parametersweeper.rb
+	constructor functionality - all soapdt specific operations are now performed in soapdt constructor
+	multithreading added
+COMPLETE: parametersweeper class
+Began work on applying objective functions to scafSeq output files
+----24/06/2013----
