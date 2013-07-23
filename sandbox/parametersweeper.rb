@@ -1,28 +1,17 @@
+# ParameterSweeper.new(options, constructor)
+# options = {:settings => {...}, :parameters => {...}}
+# Description:
+# ParameterSweeper generates all combinations of a hash of arrays (options[:parameters]).
+# Aforementioned combinations are applied to the constructor proc
+# The constructor will also have access to an unchanging settings hash (options[:settings])
+# constructor proc will be passed multipule hashes in format: {:settings => {...}, :parameters => {...}}
+# where the values in settings remain constant, and the values in parameters vary 
+
 require 'pp'
 require 'fileutils'
 require 'csv'
 require 'threach'
 require 'logger'
-# constructor specific to soap
-soap_constructor = Proc.new { |input_hash|  # make config file if doesn't already exist
-  if !File.exist?("soapdt.config")
-    rf = input_hash[:settings][:readformat] == 'fastq' ? 'q' : 'f'
-    File.open("soapdt.config", "w") do |conf|
-      conf.puts "max_rd_len=20000"
-      conf.puts "[LIB]"
-      conf.puts "avg_ins=#{input_hash[:settings][:insertsize]}"
-      conf.puts "reverse_seq=0"
-      conf.puts "asm_flags=3"
-      conf.puts "rank=2"
-      conf.puts "#{rf}1=#{input_hash[:settings][:inputDataLeft]}"
-      conf.puts "#{rf}2=#{input_hash[:settings][:inputDataRight]}"
-    end
-  end
-  constructor = "#{input_hash[:settings][:SOAP_file_path]} all -s soapdt.config"
-  constructor += input_hash[:parameters].map {|key, value| " -#{key} #{value}"}.join(",").gsub(",", "")
-  constructor
-}
-
 
 # options - is a hash of two hashes, :settings and :parameters
 #   :settings are unchanging values passed to the constructor
@@ -144,31 +133,4 @@ class ParameterSweeper
       generate_combinations(index+1, opts)
     end
   end
-
 end
-
-options = {
-  # settings to be passed to the constructor
-  :settings => {
-    :SOAP_file_path => '/bio_apps/SOAPdenovo-Trans1.02/SOAPdenovo-Trans-127mer',
-    :readformat => 'fastq',
-    :insertsize => 200,
-    :inputDataLeft => '../inputdata/l.fq',
-    :inputDataRight => '../inputdata/r.fq',
-    :threads => 2
-  },
-  # parameters to be sweeped
-  :parameters => {
-    :K => (21..29).step(8).to_a,
-    :M => (0..1).to_a, # def 1, min 0, max 3 #k value
-    :d => (0..2).step(2).to_a, # KmerFreqCutoff: delete kmers with frequency no larger than (default 0)
-    :D => (0..2).step(2).to_a, # edgeCovCutoff: delete edges with coverage no larger than (default 1)
-    :G => (25..75).step(50).to_a, # gapLenDiff(default 50): allowed length difference between estimated and filled gap
-    :L => [200], # minLen(default 100): shortest contig for scaffolding
-    :e => (2..7).step(5).to_a, # contigCovCutoff: delete contigs with coverage no larger than (default 2)
-    :t => (2..7).step(5).to_a, # locusMaxOutput: output the number of transcriptome no more than (default 5) in one locus
-    :p => 1,
-  }
-}
-soapdt = ParameterSweeper.new(options, soap_constructor)
-soapdt.run(200.00)
