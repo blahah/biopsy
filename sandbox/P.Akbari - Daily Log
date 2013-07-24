@@ -43,6 +43,5 @@ Attempting to hack together the three objective functions and outputdata file, c
 		Bash command in rbusearch method: 
 		`/bio_apps/rbusearch/rbusearch.rb --query ~/Code/biopsy/sandbox/#{@assembly} --target #{@reference} --output output --cores #{@threads}`
 		a[:reference] = ~/Code/biopsy/sandbox/Athaliana_167_protein_primaryTranscriptOnly.fa
-	/bio_apps/rbusearch/rbusearch.rb
-		Prefixed usearch to comm2 and comm3, line ~ 132
+		Added Dir.mkdir('output') to rbusearch method
 	Set chmod 777 to usearch in /apps/
