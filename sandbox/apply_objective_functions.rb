@@ -20,7 +20,7 @@ csv_file_headers = csv_file[0]
 csv_file_contents = csv_file[1..-1]
 
 handler = BiOpSy::ObjectiveHandler.new
-a = {:reference => 'Athaliana_167_protein.fa',
+a = {:reference => '~/Code/biopsy/sandbox/Athaliana_167_protein_primaryTranscriptOnly.fa',
     :assemblyname => 'test',  
     :leftreads => 'inputdata/l.fq',
     :rightreads => 'inputdata/r.fq',
@@ -40,19 +40,18 @@ CSV.open("outputdatan/objectiveFunctionOuput.csv", "ab") do |csv|
 	csv_file_contents.each do |line|
 		if line[14].to_i <= 34
 			next
-			pp line
 		end
 		# the following two lines finds the group directory of the output file
     	groupceil = (line[0].to_i / GROUPSIZE).ceil * GROUPSIZE
     	destdir = "#{(groupceil - (GROUPSIZE-1)).to_i}-#{groupceil.to_i}"
     	`gunzip outputdata/#{destdir}/#{line[0]}/#{line[0]}.scafSeq.gz`
-    	puts ""
     	a[:assembly] = "outputdata/#{destdir}/#{line[0]}/#{line[0]}.scafSeq"
     	t1 = Time.now
     	ar = handler.run_for_assembly(a, 4, true, true)
     	time = Time.now-t1
     	`gzip outputdata/#{destdir}/#{line[0]}/#{line[0]}.scafSeq`
-    	pp ar
+    	puts "output array ---"
+        pp ar
     	puts "abort here"
     	abort('p1')
 
