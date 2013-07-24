@@ -44,4 +44,6 @@ Attempting to hack together the three objective functions and outputdata file, c
 		`/bio_apps/rbusearch/rbusearch.rb --query ~/Code/biopsy/sandbox/#{@assembly} --target #{@reference} --output output --cores #{@threads}`
 		a[:reference] = ~/Code/biopsy/sandbox/Athaliana_167_protein_primaryTranscriptOnly.fa
 		Added Dir.mkdir('output') to rbusearch method
+	/lib/biopsy/objectives/unexpressed_transcripts.rb
+		Changed ../#{@assembly} to  ~/Code/biopsy/sandbox/#{@assembly}
 	Set chmod 777 to usearch in /apps/
