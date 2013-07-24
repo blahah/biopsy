@@ -34,4 +34,12 @@ combinate_params_refactor.rb RENAME parametersweeper.rb
 	multithreading added
 COMPLETE: parametersweeper class
 Began work on applying objective functions to scafSeq output files
+
 ----24/06/2013----
+Attempting to hack together the three objective functions and outputdata file, changed made:
+	/lib/biopsy/objectives/(all three .rb files)
+		require 'objectivefunction.rb' -> 'objectivefunction.rb'
+	/lib/biopsy/objectives/reciporical_best_annotation.rb
+		Bash command in rbusearch method: 
+		`/bio_apps/rbusearch/rbusearch.rb --query ~/Code/biopsy/sandbox/#{@assembly} --target #{@reference} --output output --cores #{@threads}`
+		a[:reference] = ~/Code/biopsy/sandbox/Athaliana_167_protein_primaryTranscriptOnly.fa
