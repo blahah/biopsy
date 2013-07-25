@@ -16,7 +16,6 @@ module BiOpSy
   class ObjectiveFunction
 
     include Methadone::CLILogging
-
     # Runs the objective function for the assembly supplied,
       # returning a real number value
       #
@@ -30,6 +29,10 @@ module BiOpSy
       # result = objective.run('example.fasta')
     def run(assemblydata)
       raise NotImplementedError.new("You must implement this")
+    end
+
+    def essential_files
+      return []
     end
 
   end
