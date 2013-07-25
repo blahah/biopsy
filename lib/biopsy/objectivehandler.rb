@@ -1,5 +1,7 @@
 require 'securerandom'
 require 'fileutils'
+require 'methadone'
+
 
 # extend String to implement camelize from Rails
 class String
@@ -39,6 +41,8 @@ end
 # a Hash of the results to the parent Optimiser.
 module BiOpSy
   class ObjectiveHandler
+
+    include Methadone::CLILogging
 
     attr_reader :last_tempdir
 
@@ -105,7 +109,7 @@ module BiOpSy
       return Math.sqrt(total) / results.length
     end
 
-    def run_for_assembly(assembly, threads=24, cleanup=true,allresults=false)
+    def run_for_assembly(assembly, threads=6, cleanup=true,allresults=false)
       # check assembly exists
       unless File.exists?(assembly[:assembly]) && `wc -l #{assembly[:assembly]}`.to_i > 0
         return nil
