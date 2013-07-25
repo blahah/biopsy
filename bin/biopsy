@@ -3,6 +3,7 @@
 require 'optparse'
 require 'methadone'
 require 'biopsy.rb'
+require 'logger'
 
 class App
   include Methadone::Main

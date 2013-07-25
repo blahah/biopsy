@@ -49,7 +49,7 @@ class UnexpressedTranscripts < BiOpSy::ObjectiveFunction
     end
     unless File.exists? 'results.xprs'
       # run eXpress
-      puts `express --no-bias-correct ../#{@assembly} mappedreads.sam 2>&1`
+      puts `express --no-bias-correct ../#{@assembly} mappedreads.sam > /dev/null 2>&1`
       raise 'eXpress failed' unless $?.success?
     end
     return 'results.xprs'

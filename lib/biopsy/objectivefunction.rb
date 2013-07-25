@@ -1,3 +1,6 @@
+require 'methadone'
+
+
 # Assembly Optimisation Framework: Objective Function
 # 
 # == Description
@@ -11,6 +14,8 @@
 module BiOpSy
 
   class ObjectiveFunction
+
+    include Methadone::CLILogging
 
     # Runs the objective function for the assembly supplied,
       # returning a real number value

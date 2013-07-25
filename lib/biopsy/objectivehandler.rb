@@ -1,5 +1,7 @@
 require 'securerandom'
 require 'fileutils'
+require 'methadone'
+
 
 # extend String to implement camelize from Rails
 class String
@@ -39,6 +41,8 @@ end
 # a Hash of the results to the parent Optimiser.
 module BiOpSy
   class ObjectiveHandler
+
+    include Methadone::CLILogging
 
     attr_reader :last_tempdir
 

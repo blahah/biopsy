@@ -14,16 +14,22 @@ class ReciprocalBestAnnotation < BiOpSy::ObjectiveFunction
     @assembly_name = assemblydata[:assemblyname]
     @reference = assemblydata[:reference]
     # results
+    res = self.rbusearch
     return { :weighting => 1.0,
              :optimum => 26000,
              :max => 26000.0,
-             :result => self.rbusearch,
-             :time => Time.now - t0}
+             :time => Time.now - t0}.merge res
   end
 
   def rbusearch
     Dir.mkdir 'output'
     `rbusearch --query ../#{@assembly} --target ../#{@reference} --output output --cores #{@threads}`
-    return `wc -l output/bestmatches.rbu`.to_i
+    return {
+      :result => `wc -l output/bestmatches.rbu`.to_i,
+      :query_hits => `cut -f1 output/query_result.txt | sort | uniq | wc -l`.strip,
+      :target_hits => `cut -f1 output/target_result.txt | sort | uniq | wc -l`.strip,
+      :mean_q_bitscore => `awk '{sum+=$8} END { print sum/NR}' output/bestmatches.rbu`.strip,
+      :mean_t_bitscore => `awk '{sum+=$9} END { print sum/NR}' output/bestmatches.rbu`.strip
+    }
   end
 end
