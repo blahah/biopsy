@@ -24,7 +24,7 @@ class UnexpressedTranscripts < BiOpSy::ObjectiveFunction
     @last_path = results_path
     # results
     result = self.count_unexpressed(results_path)
-    max = `grep "^>" ../#{@assembly} | wc -l`.to_i
+    max = `grep "^>" #{@assembly} | wc -l`.to_i
     max = max > 0 ? max : 1
     return { 
       :weighting => 1.0,
@@ -39,9 +39,9 @@ class UnexpressedTranscripts < BiOpSy::ObjectiveFunction
     self.build_index()
     unless File.exists? 'mappedreads.sam'
       # construct bowtie command
-      bowtiecmd = "bowtie2 -k 3 -p #{@threads} -X #{@realistic_dist} --no-unal --local --quiet #{@assembly_name} -1 ../#{@left_reads}"
+      bowtiecmd = "bowtie2 -k 3 -p #{@threads} -X #{@realistic_dist} --no-unal --local --quiet #{@assembly_name} -1 #{@left_reads}"
       # paired end?
-      bowtiecmd += " -2 ../#{@right_reads}" if @right_reads.length > 0
+      bowtiecmd += " -2 #{@right_reads}" if @right_reads.length > 0
       # other functions may want the output, so we save it to file
       bowtiecmd += " > mappedreads.sam"
       # run bowtie
@@ -49,7 +49,7 @@ class UnexpressedTranscripts < BiOpSy::ObjectiveFunction
     end
     unless File.exists? 'results.xprs'
       # run eXpress
-      puts `express --no-bias-correct ../#{@assembly} mappedreads.sam > /dev/null 2>&1`
+      `express --no-bias-correct #{@assembly} mappedreads.sam > /dev/null 2>&1`
       raise 'eXpress failed' unless $?.success?
     end
     return 'results.xprs'
@@ -57,7 +57,7 @@ class UnexpressedTranscripts < BiOpSy::ObjectiveFunction
 
   def build_index()
     unless File.exists?(@assembly + '.1.bt2')
-      `bowtie2-build --offrate 1 ../#{@assembly} #{@assembly_name}`
+      `bowtie2-build --offrate 1 #{@assembly} #{@assembly_name}`
     end
   end
 
