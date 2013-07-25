@@ -8,6 +8,7 @@ class UnexpressedTranscripts < BiOpSy::ObjectiveFunction
 
   def run(assemblydata, threads=6)
     puts "running objective: UnexpressedTranscripts"
+    t0 = Time.now
     @threads = threads
     # extract assembly data
     @assembly = assemblydata[:assembly]
@@ -29,7 +30,8 @@ class UnexpressedTranscripts < BiOpSy::ObjectiveFunction
       :weighting => 1.0,
       :optimum => 0,
       :max => max.to_f,
-      :result => result 
+      :result => result,
+      :time => Time.now - t0 
     }
   end
 

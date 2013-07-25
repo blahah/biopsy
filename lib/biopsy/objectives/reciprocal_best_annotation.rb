@@ -7,6 +7,7 @@ class ReciprocalBestAnnotation < BiOpSy::ObjectiveFunction
 
   def run(assemblydata, threads=6)
     puts "running objective: ReciprocalBestAnnotation"
+    t0 = Time.now
     @threads = threads
     # extract assembly data
     @assembly = assemblydata[:assembly]
@@ -16,7 +17,8 @@ class ReciprocalBestAnnotation < BiOpSy::ObjectiveFunction
     return { :weighting => 1.0,
              :optimum => 26000,
              :max => 26000.0,
-             :result => self.rbusearch}
+             :result => self.rbusearch,
+             :time => Time.now - t0}
   end
 
   def rbusearch
