@@ -109,9 +109,10 @@ module BiOpSy
       return Math.sqrt(total) / results.length
     end
 
-    def run_for_assembly(assembly, threads=6, cleanup=true,allresults=false)
+    def run_for_assembly(assembly, threads=6, cleanup=0, allresults=false)
       # check assembly exists
       unless File.exists?(assembly[:assembly]) && `wc -l #{assembly[:assembly]}`.to_i > 0
+        info("file #{assembly[:assembly]} does not exist")
         return nil
       end
       # run all objectives for assembly
@@ -121,9 +122,32 @@ module BiOpSy
         @objectives.each_pair do |name, objective|
           results[name] = self.run_objective(objective, name, assembly, threads)
         end
+        if cleanup == 1
+          # remove all but essential files
+          essential_files = []
+          @objectives.values.each{ |objective| essential_files += objective.essential_files }
+          Dir["*"].each do |file|
+            next if File.directory? file
+            if essential_files.include? file
+              `gzip #{file}`
+              FileUtils.mv("#{file}.gz", '..')
+            end
+          end
+          # Dir.chdir('output') do
+          #   Dir["*"].each do |file|
+          #     next if File.directory? file
+          #     if essential_files.include? file
+          #       `gzip #{file}`
+          #       FileUtils.mv("#{file}.gz", '../..')
+          #     end
+          #   end
+          # end
+        end
       end
-      # remove temp dir?
-      FileUtils.rm_rf @last_tempdir if cleanup
+      unless cleanup == 0
+        # clean up temp dir
+        FileUtils.rm_rf @last_tempdir
+      end
       if allresults
         return {:results => results,
                 :reduced => self.dimension_reduce(results)}
@@ -147,4 +171,5 @@ module BiOpSy
     end
 
   end
+
 end

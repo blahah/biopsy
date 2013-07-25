@@ -17,7 +17,7 @@ end
 class BadReadMappings < BiOpSy::ObjectiveFunction
 
   def run(assemblydata, threads=6)
-    puts "running objective: BadReadMappings"
+    info "running objective: BadReadMappings"
     t0 = Time.now
     @threads = threads
     # extract assembly data
@@ -35,8 +35,7 @@ class BadReadMappings < BiOpSy::ObjectiveFunction
     return { :weighting => 1.0,
              :optimum => 0.0,
              :max => 1.0,
-             :result => self.parse_sam,
-             :time => Time.now - t0}
+             :time => Time.now - t0}.merge self.parse_sam
   end
 
   def map_reads
@@ -49,7 +48,7 @@ class BadReadMappings < BiOpSy::ObjectiveFunction
       # other functions may want the output, so we save it to file
       bowtiecmd += " > mappedreads.sam"
       # run bowtie
-      puts `#{bowtiecmd}`
+      debug(`#{bowtiecmd}`)
     end
   end
 
@@ -62,24 +61,24 @@ class BadReadMappings < BiOpSy::ObjectiveFunction
    # colnames = %w(1:name 2:flag 3:chr 4:pos 5:mapq 6:cigar 7:mchr 8:mpos 9:insrt 10:seq 11:qual)
 
   def parse_sam
+    diagnostics = {
+      :total => 0,
+      :good => 0,
+      :bad => 0,
+      :paired => 0,
+      :unpaired => 0,
+      :proper_pair => 0,
+      :improper_pair => 0,
+      :proper_orientation => 0,
+      :improper_orientation => 0,
+      :both_mapped => 0,
+      :same_contig => 0,
+      :realistic => 0,
+      :unrealistic => 0
+    }
     if File.exists?('mappedreads.sam') && `wc -l mappedreads.sam`.to_i > 0
       ls = BetterSam.new
       rs = BetterSam.new
-      diagnostics = {
-        :total => 0,
-        :good => 0,
-        :bad => 0,
-        :paired => 0,
-        :unpaired => 0,
-        :proper_pair => 0,
-        :improper_pair => 0,
-        :proper_orientation => 0,
-        :improper_orientation => 0,
-        :both_mapped => 0,
-        :same_contig => 0,
-        :realistic => 0,
-        :unrealistic => 0
-      }
       flags = {}
       sam = File.open('mappedreads.sam').readlines
       sam.delete_if{ |line| line[0] == "@" }.each_slice(2) do |l, r|
@@ -158,12 +157,13 @@ class BadReadMappings < BiOpSy::ObjectiveFunction
           end
         end
       end
-      pp diagnostics
-      # pp flags
-      return diagnostics[:bad]
-    else
-      return 0.0
-      # raise 'Could not find mapped reads'
+      diagnostics[:result] = diagnostics[:bad]
     end
+    return diagnostics
   end
+
+  def essential_files
+    return ['mappedreads.sam']
+  end
+
 end

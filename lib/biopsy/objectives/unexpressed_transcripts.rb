@@ -7,7 +7,7 @@ require 'objectivefunction.rb'
 class UnexpressedTranscripts < BiOpSy::ObjectiveFunction
 
   def run(assemblydata, threads=6)
-    puts "running objective: UnexpressedTranscripts"
+    info "running objective: UnexpressedTranscripts"
     t0 = Time.now
     @threads = threads
     # extract assembly data
@@ -49,7 +49,8 @@ class UnexpressedTranscripts < BiOpSy::ObjectiveFunction
     end
     unless File.exists? 'results.xprs'
       # run eXpress
-      `express --no-bias-correct #{@assembly} mappedreads.sam > /dev/null 2>&1`
+      #info(`express --no-bias-correct #{@assembly} mappedreads.sam 2>1&`)
+      `express --no-bias-correct #{@assembly} mappedreads.sam 2>1&`
       raise 'eXpress failed' unless $?.success?
     end
     return 'results.xprs'
@@ -63,6 +64,10 @@ class UnexpressedTranscripts < BiOpSy::ObjectiveFunction
 
   def count_unexpressed(results_path)
     return `cut -f7 #{results_path} | grep "^0" | wc -l`.to_i
+  end
+
+  def essential_files
+    return ['mappedreads.sam', 'results.xprs']
   end
 
 end
