@@ -23,7 +23,7 @@ class ReciprocalBestAnnotation < BiOpSy::ObjectiveFunction
 
   def rbusearch
     Dir.mkdir 'output'
-    `rbusearch --query ../#{@assembly} --target ../#{@reference} --output output --cores #{@threads}`
+    `rbusearch --query #{@assembly} --target #{@reference} --output output --cores #{@threads}`
     return {
       :result => `wc -l output/bestmatches.rbu`.to_i,
       :query_hits => `cut -f1 output/query_result.txt | sort | uniq | wc -l`.strip,
