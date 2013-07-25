@@ -18,6 +18,7 @@ class BadReadMappings < BiOpSy::ObjectiveFunction
 
   def run(assemblydata, threads=6)
     puts "running objective: BadReadMappings"
+    t0 = Time.now
     @threads = threads
     # extract assembly data
     @assembly = assemblydata[:assembly]
@@ -34,7 +35,8 @@ class BadReadMappings < BiOpSy::ObjectiveFunction
     return { :weighting => 1.0,
              :optimum => 0.0,
              :max => 1.0,
-             :result => self.parse_sam}
+             :result => self.parse_sam,
+             :time => Time.now - t0}
   end
 
   def map_reads

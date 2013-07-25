@@ -8,11 +8,11 @@ require 'csv'
 
 # define a test assembly
 a = { 
-  :assembly => 'testset/final.rice_out.unpadded.fasta',
+  :assembly => 'testset/1.scafSeq',
   :reference => 'testset/ref.fa',
   :assemblyname => 'test',  
-  :leftreads => 'testset/l.pooled.keep.fq',
-  :rightreads => 'testset/r.pooled.keep.fq',
+  :leftreads => 'testset/l.fq',
+  :rightreads => 'testset/r.fq',
   :insertsize => 200,
   :insertsd => 50
 }
