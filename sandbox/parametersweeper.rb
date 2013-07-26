@@ -127,6 +127,7 @@ class ParameterSweeper
       @parameter_counter += 1
       return
     end
+    # recursively generate combinations
     key = @input_parameters[:parameters].keys[index]
     @input_parameters[:parameters][key].each do |value|
       opts[key] = value
