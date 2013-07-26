@@ -47,3 +47,13 @@ Attempting to hack together the three objective functions and outputdata file, c
 	/lib/biopsy/objectives/unexpressed_transcripts.rb
 		Changed ../#{@assembly} to  ~/Code/biopsy/sandbox/#{@assembly}
 	Set chmod 777 to usearch in /apps/
+
+
+----25/06/2013----
+	Reversed changes made yesterday
+	Debugged apply_objective_function.rb, script now works to apply objectivehandler.rb on all scafSeq output files
+	Modified /lib/biopsy/objectivehandler.rb to have 3 cleaup states, no cleanup, clean all but essential output files, or clean all
+	Ran objectivehandler script on output on local PC and cluster
+----26/06/2013----
+	Discussed biopsy and chain projects with R.Smith, drew up plan
+	Began visualising data in R,  3D scatter plots of output with color variant
