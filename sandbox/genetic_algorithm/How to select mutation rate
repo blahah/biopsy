@@ -4,3 +4,4 @@ A high mutation rate is good initally:
 	most paramters will be wrong, therefore you have a high chance of changing an incorrect paramter
 But high mutation rate is bad near prefection:
 	because most paramters will be correct (to achieve highest score) and therefore you have a high chance of changing a good paramter
+

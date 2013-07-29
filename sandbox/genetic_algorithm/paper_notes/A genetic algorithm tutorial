@@ -1,0 +1,42 @@
+A genetic algorithm tutorial
+===================
+@@Currently at page 14
+[http://dl.acm.org/ft_gateway.cfm?id=1144201&ftid=365401&dwn=1&CFID=350552053&CFTOKEN=43981744](Link to article)
+
+* Genetic algorithms don't use gradient information to find max.
+* The initial population is generated randomly.
+* Evaluation of fitness of a chromosome independent of others, however always compared with others (rank vs proportional)
+* Fitness = eval of chromosome / average eval
+
+Stages of generation in a GA:
+Current population ->(selection, proportional to fitness) Intermediete population ->(crossover (mating)) Next population
+
+
+
+Selection
+-----------------
+*Aims to promote parameter sets with higher scoring hyperplanes*
+Copies = integer of fitness value
+Copies += %remainder of fitness value
+Copies += 1 if %remainter of fitness value < 1-remainder
+
+Fitness Scaling, rank or proportional?
+Need to prevent selective pressure decreasing as fitness eval range decreases.
+
+Crossover
+-------------------
+*Mates high scoring parameter sets to explore new regions*
+Use 2 point cross over to prevent linkage bias
+**Store paramters in hashes allowing reversal to prevent linkage bias.**
+	(All parameter sets would have to undergo reversal to prevent parameter duplication during crossover)
+Not all chromosome sets given opportunity to mate they will carry over (?)
+
+
+Things to consider
+-------------------
+Hillwalking on mutation
+Rank vs Proportinal fitness comparison
+1st, 2nd or unique crossover (is this relevent if we scramble parameter order?)
+	-Store parameters as a hash and scramble this hash to prevent linkage. 
+		Because linkage has no advantage in this scanario? (the schema theorm doesn't apply)
+			Is it useful to preserve the order of parameters, example: would a specific value of K only be useful if coupled with a value of D

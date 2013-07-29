@@ -1,0 +1,26 @@
+How genetic algorithms really work - Notes
+===================
+[http://muehlenbein.org/mut92.pdf](Link to pdf)
+
+Ideas tested against:
+ONEMAX function
+	Returns the number of ones in the input strung (optimum solution is all 1's)
+(k,l)-deceptive function
+	Contains two local maxima and one isolated global. Algorithm is pulled towards local
+EQUAL function
+	Many global maxima
+
+Different variations of genetic algorithm perform differently against the above three scenarios.
+
+
+Hillclimbing
+--------------------
+Adding Hillclimbing to an algorithm aims to reduce the computationally expensive final parameter changes prior to a perfect result.
+
+Two types of hillclimbing
+
+**next ascent na**
+Each bit flipped individually (in predefined sequence) flip only accepted if net improvement observed
+
+**steepest ascent sa**
+All of the remaining bits flipped, bit resulting in the largest imporvement is actually flipped.
