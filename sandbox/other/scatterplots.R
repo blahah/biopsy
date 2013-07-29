@@ -1,24 +1,30 @@
 library(scatterplot3d)
 # create column indicating point color
-# rainbow(length(merged_leaff_soapdt$K))[rank(merged_leaff_soapdt$K)])
-merged_leaff_soapdt$pcolor
-merged_leaff_soapdt$pcolor[merged_leaff_soapdt$K>21] <- "red"
+#merged_leaff_soapdt$pcolor = rainbow(length(merged_leaff_soapdt$L))[rank(merged_leaff_soapdt$L)]
+merged_leaff_soapdt <- read.csv('outputdata/merged_leaff_soapdt.csv')
+merged_leaff_soapdt <- merged_leaff_soapdt[-which(merged_leaff_soapdt$smallest == 0),]
+# rainbow(length(merged_leaff_soapdt$X)) is not working, points arranged by order encountered not size
+rainbow = rainbow(length(unique(merged_leaff_soapdt$K)))
+names(rainbow) <- unique(merged_leaff_soapdt$K)
+merged_leaff_soapdt$pcolor = apply(merged_leaff_soapdt, 1, function(x) rainbow[x[7]])
+#merged_leaff_soapdt$pcolor = rainbow(length(merged_leaff_soapdt$L))
+x <- merged_leaff_soapdt$numSeqs
+y <- merged_leaff_soapdt$smallest
+z <- merged_leaff_soapdt$n50
 with(merged_leaff_soapdt, {
-  s3d <- scatterplot3d(x, x, y,        # x y and z axis
-                       pch=19, color=pcolor,        # circle color indicates no. of cylinders
+  s3d <- scatterplot3d(x, y, z,        # x y and z axis
+                       pch=19, color=pcolor,
                        type="h", lty.hplot=2,       # lines to the horizontal plane
                        scale.y=.75,                 # scale y axis (reduce by 25%)
-                       main="3-D Scatterplot Example 4",
-                       xlab="xlacement (cu. in.)",
-                       ylab="Weight (lb/1000)",
-                       zlab="Miles/(US) Gallon")
-  s3d.coords <- s3d$xyz.convert(x, x, y)
-  text(s3d.coords$x, s3d.coords$y,     # x and y coordinates
-       labels=row.names(merged_leaff_soapdt),       # text to plot
-       pos=4, cex=.5)                  # shrink text 50% and place to right of points)
-  # add the legend
-  legend("topleft", inset=.05,      # location and inset
-         bty="n", cex=.5,              # suppress legend box, shrink text 50%
-         title="Number of Cylinderssss",
-         c("4", "6", "8"), fill=c("red", "blue", "darkgreen"))
+                       main="(numSeqs, smallest, n50) K",
+                       xlab="numSeqs", 
+                       ylab="smallest",
+                       zlab="n50")
+  s3d.coords <- s3d$xyz.convert(x, y, z)
+
 })
+# get some extra room
+par(mar=c(7,4,4,6))
+col.labels<-c(toString(min(merged_leaff_soapdt$K)),quantile(merged_leaff_soapdt$K, c(1, 3)/4), toString(max(merged_leaff_soapdt$K)))
+# align labels below color bar?
+color.legend(0,0,0,0,col.labels,merged_leaff_soapdt$pcolor,cex=1)
