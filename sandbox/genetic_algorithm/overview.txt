@@ -1,0 +1,48 @@
+Overview of Genetic Algorithm
+====================
+Overview of algorithm including points of ambiguity (choices to be made) in the function of algorithm
+
+Consants:
+--------------------
+SELECTIVITY = %
+MUTATION_RATE = %
+
+Global Variables:
+--------------------
+(explained in context below)
+$paramter_ranges = {} # hash
+$current_generation = {[], [], []} # hash of arrays
+$generation_birth_rate = 0 # counter
+
+Function of algorithm:
+---------------------
+# hash of all paramters and the ranges they can take
+$paramter_ranges = {} # USE THIS TO ASSIGN PARAMETERS WHICH DO NOT MUTATE
+
+# array of current paramter set seperated by comma
+$current_generation = {[], [], [], []}
+
+# score current generation, add score to array
+.....
+
+# pick top SELECTIVITY% of current generation and mate
+
+# roll dice, introduce mutation 5% of the time
+# use $paramter_ranges = {}, select a new random paramter
+
+# set a new $current_generation
+--Is this a good idea?
+# if parents have higher score discard children
+# if children have a higher score discard parents, add +1 to $generation_birth_rate
+
+
+Choices To be made
+---------------------
+How to pick suitable values for:
+SELECTIVITY
+MUTATION_RATE
+
+How to select the first parameter set
+(representing the first $current_generation)
+
+When to stop the algorithm
