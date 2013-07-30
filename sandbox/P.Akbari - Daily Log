@@ -57,3 +57,10 @@ Attempting to hack together the three objective functions and outputdata file, c
 ----26/06/2013----
 	Discussed biopsy and chain projects with R.Smith, drew up plan
 	Began visualising data in R,  3D scatter plots of output with color variant
+----29/06/2013----
+	Completed 3D scatter plot
+	Discussed applicaton of genetic algorithm to biopsy, began reading about genetic algorithm
+----30/06/2013----
+	Began basic implementation of genetic algorithm in ruby.
+	Considering how to base initial variables (pop size, hillwalking, selection rate) based on user defined time constraint
+	Began writing the selection process used by the genetic algorithm
