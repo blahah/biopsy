@@ -49,26 +49,31 @@ class GeneticAlgorithm
 			current_generation_temp << parameter_set + [@objective_function.call(parameter_set)]
 		end
 		@current_generation = current_generation_temp.sort {|a, b| a[-1] <=> b[-1]}
-		step_size = 2.0/@current_generation.length
-		counter = 1
+		step_size = 2.0/(@current_generation.length-1)
+		counter = 0
 		current_generation_temp = []
 		@current_generation.each do |parameter_set|
 			parameter_set[-1] = counter * step_size
-			current_generation_temp << parameter-set
+			current_generation_temp << parameter_set
 			counter += 1
 		end
 		@current_generation = current_generation_temp
 		@next_generation = []
+		randm = Random.new
 		@current_generation.each do |parameter_set|
+			p parameter_set[-1].to_i
 			if parameter_set[-1] >= 1
 				@next_generation << parameter_set
-			elsif parameter_set[-1] == 2
+			if parameter_set[-1].to_i == 2
+				p 'helloo'
 				@next_generation << parameter_set
 			end
-			
+			@next_generation << parameter_set if rand < parameter_set[-1].modulo(1)
 		end
-
 		pp @current_generation
+		puts @current_generation.length
+		pp @next_generation
+		puts @next_generation.length
 		abort('now')
 
 		# apply selective pressure on @current_generation based on @current_generation_score
