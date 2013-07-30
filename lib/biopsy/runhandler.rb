@@ -1,4 +1,4 @@
-# Assembly Optimisation Framework: Run Handler
+# Optimisation Framework: Run Handler
 #
 # == Description
 #
@@ -7,36 +7,65 @@
 # and the optimisation algorithm, looping through the optimisation cycle until
 # completion and then returning the output.
 #
-# == Explanation
-#
-# === Loading objective functions
-#
-# The Handler expects a directory containing objectives (by default it looks in *currentdir/objectives*).
-# The *objectives* directory should contain the following:
-#
-# * a *.rb* file for each objective function. The file should define a subclass of ObjectiveFunction
-# * (optionally) a file *objectives.txt* which lists the objective function files to use
-#
-# If the objectives.txt file is absent, the subset of objectives to use can be set directly in the Optimiser
-# , or if no such restriction is set, the whole set of objectives will be run.
-#
-# Each file listed in *objectives.txt* is loaded if it exists.
-#
-# === Running objective functions
-#
-# The Handler iterates through the objectives, calling the *run()* method
-# of each by passing the assembly. After collecting results, it returns
-# a Hash of the results to the parent Optimiser.
 module BiOpSy
 
   class RunHandler
 
-	initialize(constructor, settings)
-		@constructor = constructor
-		@settings = settings
-		
-	end
+  	# Initialises the RunHandler
+  	# 
+  	# ==== Attributes
+  	# * +constructor+ - A Constructor object which takes as input
+  	#   a hash of parameter settings and returns a command that runs
+  	#   the target program with the settings (see Constructor documentation).
+  	# * +settings+ - Settings object containing the parameter ranges
+  	#   and the input settings and other metadata necessary to run 
+  	#   the experiment (see Settings documentation).
+  	#
+  	# ==== Options
+  	# * +:constructor+ - Constructor (see above)
+  	# * +:settings+ - Settings (see above)
+  	# * +:threads+ - Number of threads to use (as specified by user or default)
+  	# 
+		def initialize(constructor, settings, threads)
+			@constructor = constructor
+			@settings = settings
+			@optimiser = OptHandler.new(threads)
+			@objective = ObjectiveHandler.new(threads)
+		end
 
-  end # end of class ObjectiveHandler
+		# Runs the experiment until the completion criteria
+		# are met. On completion, returns the best parameter
+		# set.
+		def run
+			in_progress = true
+			@current_params = select_first_params
+			while in_progress do
+				run_iteration
+				# update the best result
+				@best = @optimiser.best
+				# have we finished?
+				in_progress = !@optimiser.finished?
+			end
+			return @best
+		end
+
+		# Runs a single iteration of the optimisation,
+		# encompassing the program, objective(s) and optimiser.
+		# Returns the output of the optimiser.
+		def run_iteration
+			# run the target
+			run_data = @constructor.run @current_params
+			# evaluate with objectives
+			result = @objective.run run_data
+			# get next steps from optimiser
+			@current_params = @optimiser.run result
+		end
+
+		# Chooses the initial set(s) of parameters
+		def select_first_params
+
+		end
+
+  end # end of class RunHandler
 
 end # end of module BiOpSy

@@ -1,31 +1,28 @@
-# Assembly Optimisation Framework: Objective Function Handler
+# Optimisation Framework: Optimisation Algorithm Handler
 #
 # == Description
 #
-# The Handler manages the objective functions for the optimisation experiment.
-# Specifically, it finds all the objective functions and runs them when requested,
-# outputting the results to the main Optimiser.
+# The Handler manages the optimisation algorithms for the optimisation experiment.
+# Specifically, it finds all the available algorithms and runs then when requested.
+#
+# The handler takes parameter space as initial input and objective function scores 
+# as continuous input.
+#
+# Each iteration results in the next set(s) of parameters to use being output, and
+# when the run is complete, the optimal set of parameters is returned.
 #
 # == Explanation
 #
-# === Loading objective functions
+# === Loading optimisation algorithms
 #
-# The Handler expects a directory containing objectives (by default it looks in *currentdir/objectives*).
-# The *objectives* directory should contain the following:
+# The Handler expects a directory containing optimisation algorithms
+# (by default it looks in *currentdir/optimisers*).
+# The *optimisers* directory should contain the following:
 #
-# * a *.rb* file for each objective function. The file should define a subclass of ObjectiveFunction
-# * (optionally) a file *objectives.txt* which lists the objective function files to use
+# * a *.rb* file for each optimisation algorithm. The file should define a subclass of OptAlgorithm
 #
-# If the objectives.txt file is absent, the subset of objectives to use can be set directly in the Optimiser
-# , or if no such restriction is set, the whole set of objectives will be run.
+# Which algorith will be executed is decided based on user input or on the data.
 #
-# Each file listed in *objectives.txt* is loaded if it exists.
-#
-# === Running objective functions
-#
-# The Handler iterates through the objectives, calling the *run()* method
-# of each by passing the assembly. After collecting results, it returns
-# a Hash of the results to the parent Optimiser.
 module BiOpSy
 
   class ObjectiveHandler
