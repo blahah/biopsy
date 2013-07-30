@@ -1,0 +1,16 @@
+Dealing with user defined time constraint
+=============================
+Discussing strategies for dealing with the time constraint set by user.
+
+Aggressive convergence
+-----------------------------
+When predifined time constraint is approaching algorithm begins path of aggresive convergence, increasing selective pressure and hillwalk components (at the expense of population diversity which is irrelevent near end time).
+
+
+Initial conditions
+-----------------------------
+Changing the initial conditions (initially or in realtime) depending on the time constraint.
+
+* mutation rate, a high mutation rate will increase initial convergence but hinder near perfect convergence
+* hillwalk, will increase convergence to local maxima (which may include global maxima depending on population diversity)
+* initial population size, very imporant factor dictating the time of convergence. Difficult to tell relationship between population size and convergence without prior testing.

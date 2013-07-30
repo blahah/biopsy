@@ -1,6 +1,5 @@
 A genetic algorithm tutorial
 ===================
-@@Currently at page 14
 [http://dl.acm.org/ft_gateway.cfm?id=1144201&ftid=365401&dwn=1&CFID=350552053&CFTOKEN=43981744](Link to article)
 
 * Genetic algorithms don't use gradient information to find max.
@@ -34,9 +33,14 @@ Not all chromosome sets given opportunity to mate they will carry over (?)
 
 Things to consider
 -------------------
-Hillwalking on mutation
+Hillwalking after mutation
+
 Rank vs Proportinal fitness comparison
+
 1st, 2nd or unique crossover (is this relevent if we scramble parameter order?)
 	-Store parameters as a hash and scramble this hash to prevent linkage. 
 		Because linkage has no advantage in this scanario? (the schema theorm doesn't apply)
 			Is it useful to preserve the order of parameters, example: would a specific value of K only be useful if coupled with a value of D
+
+Island model, seperate communities of strings with a migration rate.
+
