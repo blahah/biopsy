@@ -28,6 +28,7 @@ class GeneticAlgorithm
 
 	def run
 		selection_process
+		crossover
 		# apply crossover
 		# apply hillwalk
 	end
@@ -40,6 +41,7 @@ class GeneticAlgorithm
 		# average time
 		return (time/parameters_to_test)
 	end
+	# ----remainder stochastic sampling (stochastic universal sampling method)----
 	# apply obj function on parameter_sets, rank parameter_sets by obj func score
 	# highest rank=2, lowest rank=0
 	# for each integer in rank reproduce += 1, for decimal allow random reproduction (based on size of decimal)
@@ -74,8 +76,58 @@ class GeneticAlgorithm
 	end
 
 	def crossover
-		# begin randomised mating process
-		# mate top 10%, 50%?
+		def mating_process(mother, father)
+			children = [[],[]]
+			counter = 0
+			mother.each do |mother_element|
+				#puts rand
+				if rand <= 0.5
+					children[0] << mother_element
+					children[1] << father[counter]
+				else
+					children[0] << father[counter]
+					children[1] << mother_element
+				end
+				counter += 1
+			end
+			return children
+		end
+		puts @current_generation.length
+		pp @current_generation
+		# mate the best quarter with the best half
+		best_quarter_num = (@current_generation.length.to_f/4.0).floor
+		puts "best quar #{best_quarter_num}"
+		best_half_num = (@current_generation.length.to_f/2.0).ceil
+		puts "best half #{best_half_num}"
+		best_quarter = []
+		best_half = []
+
+		counter = 1
+		@current_generation.reverse!.each do |parameter_set|
+			if counter <= best_quarter_num
+				best_quarter << parameter_set 
+			elsif counter <= best_half_num
+				best_half << parameter_set
+			else
+				break
+			end
+			counter +=1
+		end
+		children = []
+		best_quarter.each do |father|
+			mother_index_mated = rand(best_half.length())
+			twins = mating_process(best_half[mother_index_mated], father)
+			pp twins
+			children << twins[0] + twins[1]
+			best_half.delete_at(mother_index_mated)
+		end
+		current_generation_temp = []
+		
+		puts "children"
+		pp children
+		#pp best_quarter
+		#puts "best half"
+		#pp best_half
 
 		# mutate children
 		# return new @current_generation
