@@ -28,7 +28,6 @@ class GeneticAlgorithm
 
 	def run
 		selection_process
-		# apply selection process
 		# apply crossover
 		# apply hillwalk
 	end
@@ -41,44 +40,37 @@ class GeneticAlgorithm
 		# average time
 		return (time/parameters_to_test)
 	end
-
+	# apply obj function on parameter_sets, rank parameter_sets by obj func score
+	# highest rank=2, lowest rank=0
+	# for each integer in rank reproduce += 1, for decimal allow random reproduction (based on size of decimal)
 	def selection_process
 		# apply objective function on parameter sets
 		current_generation_temp = []
 		@current_generation.each do |parameter_set|
 			current_generation_temp << parameter_set + [@objective_function.call(parameter_set)]
 		end
+		# sort @current_generation by objective function score (ASC), replace @current_generation w/ temporary array
 		@current_generation = current_generation_temp.sort {|a, b| a[-1] <=> b[-1]}
+		# the highest rank is 2.0, generate step_size (difference in rank between each element)
 		step_size = 2.0/(@current_generation.length-1)
+		# counter to be used when assigning rank
 		counter = 0
-		current_generation_temp = []
+		# next_generation temporary array, @current_generation is replaced by next_generation after loop
+		next_generation = []
 		@current_generation.each do |parameter_set|
-			parameter_set[-1] = counter * step_size
-			current_generation_temp << parameter_set
+			# rank (asc) is the order in which the element appears (counter) times step_size so that the max is 2
+			rank = counter * step_size
+			# assign the array element previously holding obj func score as rank
+			parameter_set[-1] = rank
+			# (next two lines) for each integer in rank +1 to next_generation
+			next_generation << parameter_set if rank >= 1
+			next_generation << parameter_set if rank.to_i == 2
+			# for decimal allow random reproduction (based on size of decimal)
+			next_generation << parameter_set if rank.modulo(1) > rand
 			counter += 1
 		end
-		@current_generation = current_generation_temp
-		@next_generation = []
-		randm = Random.new
-		@current_generation.each do |parameter_set|
-			p parameter_set[-1].to_i
-			if parameter_set[-1] >= 1
-				@next_generation << parameter_set
-			if parameter_set[-1].to_i == 2
-				p 'helloo'
-				@next_generation << parameter_set
-			end
-			@next_generation << parameter_set if rand < parameter_set[-1].modulo(1)
-		end
-		pp @current_generation
-		puts @current_generation.length
-		pp @next_generation
-		puts @next_generation.length
-		abort('now')
-
-		# apply selective pressure on @current_generation based on @current_generation_score
-
 		# return new @current_generation
+		@current_generation = next_generation
 	end
 
 	def crossover
