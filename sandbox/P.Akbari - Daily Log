@@ -59,8 +59,20 @@ Attempting to hack together the three objective functions and outputdata file, c
 	Began visualising data in R,  3D scatter plots of output with color variant
 ----29/06/2013----
 	Completed 3D scatter plot
-	Discussed applicaton of genetic algorithm to biopsy, began reading about genetic algorithm
+	Discussed applicaton of genetic algorithm to biopsy, began reading about genetic algorithms
 ----30/06/2013----
 	Began basic implementation of genetic algorithm in ruby.
 	Considering how to base initial variables (pop size, hillwalking, selection rate) based on user defined time constraint
 	Began writing the selection process used by the genetic algorithm
+----31/06/2013----
+	Completed selection process
+	Completed crossover
+	Pre-alpha Genetic Algorithm without mutation functionality working
+----01/07/2013----
+	Rewrote code, chromosomes now stored as hashes
+	population size regulated, by pushing pop size up or down based on deviation from initial population size
+	Begun thinking about mutation script, will implement tomorrow
+	
+	TODO:
+		Mutation
+		Storing precomputed parameter scores
