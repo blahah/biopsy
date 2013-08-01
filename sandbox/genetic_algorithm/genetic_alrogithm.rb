@@ -3,6 +3,11 @@ require 'pp'
 require 'threach'
 require 'csv'
 
+def ppp(obj)
+	puts "[#{obj.map{|x| x.join(',') }.join("\n")}]"
+end
+
+
 class GeneticAlgorithm
 	def initialize(parameter_range, objective_function, time_limit=nil)
 		# the number of times objective function is applied per generation
@@ -10,11 +15,13 @@ class GeneticAlgorithm
 		@population_size = 10
 		@MUTATION_RATE = 0.01
 		@THREADS = 1
+		@parameter_range = parameter_range
+		#pp @parameter_range
 		# set.map {|key, value| value}
-		@parameter_range = []
-		parameter_range.each do |set|
-			@parameter_range << set.values
-		end
+		#@parameter_range = []
+		#parameter_range.each do |set|
+			#@parameter_range << set.values
+		#end
 		@objective_function = objective_function
 		####@time_limit = time_limit
 
@@ -23,13 +30,43 @@ class GeneticAlgorithm
 		# to make the first generation get a random selection of the parameters in the parameter range
 		# use average time calculated above to make a selection
 		####@current_generation = @parameter_range.sample(@population_size))
-		@current_generation = @parameter_range.sample(@population_size)
+		@current_generation = @parameter_range.sample(@population_size).map {|value| [value]}
 	end
 
 	def run
-		selection_process
-		crossover
-		# apply crossover
+		#puts "------------------Starting population---------------------------------"
+		#ppp @current_generation
+		#puts "------------------Scores of starting population-----------------------"
+		#@current_generation.each do |param|
+			#puts @objective_function.call(param)
+		#end
+		puts "-----#{@current_generation.length}----START"
+		(1..1000).each do |num|
+			# puts "---------------------#{num}-----------------------------------------"
+			selection_process
+			# puts "-------------------CROSSOVER:----------------------------------------"
+			crossover
+			# ppp @current_generation
+			if num%100 == 0
+				puts "-----#{@current_generation.length}----"
+				prev_score = 0
+				@current_generation.each do |param|
+					prev_score = @objective_function.call(param) if @objective_function.call(param) > prev_score
+				end
+				puts prev_score
+			end
+			# puts "--------------------end #{num}--------------------------------------"
+		end
+		puts "-----#{@current_generation.length}----END"
+		#puts "------------------Ending population------------------------------------"
+		#ppp @current_generation
+		#puts "------------------Scores of ending population--------------------------"
+		prev_score = 0
+		@current_generation.each do |param|
+			#puts @objective_function.call(param)
+			prev_score = @objective_function.call(param) if @objective_function.call(param) > prev_score
+		end
+		puts prev_score
 		# apply hillwalk
 	end
 	# assuming the most time intensive component is applying objective functions
@@ -43,32 +80,30 @@ class GeneticAlgorithm
 	end
 	# ----remainder stochastic sampling (stochastic universal sampling method)----
 	# apply obj function on parameter_sets, rank parameter_sets by obj func score
-	# highest rank=2, lowest rank=0
+	# scale obj func score to ranking where: highest rank=2, lowest rank=0
 	# for each integer in rank reproduce += 1, for decimal allow random reproduction (based on size of decimal)
 	def selection_process
 		# apply objective function on parameter sets
 		current_generation_temp = []
 		@current_generation.each do |parameter_set|
-			current_generation_temp << parameter_set + [@objective_function.call(parameter_set)]
+			current_generation_temp << [parameter_set[0], @objective_function.call(parameter_set)]
 		end
 		# sort @current_generation by objective function score (ASC), replace @current_generation w/ temporary array
-		@current_generation = current_generation_temp.sort {|a, b| a[-1] <=> b[-1]}
+		@current_generation = current_generation_temp.sort {|a, b| a.last <=> b.last}
 		# the highest rank is 2.0, generate step_size (difference in rank between each element)
 		step_size = 2.0/(@current_generation.length-1)
 		# counter to be used when assigning rank
 		counter = 0
 		# next_generation temporary array, @current_generation is replaced by next_generation after loop
 		next_generation = []
-		@current_generation.each do |parameter_set|
+		@current_generation.each do |parameter_set, score|
 			# rank (asc) is the order in which the element appears (counter) times step_size so that the max is 2
 			rank = counter * step_size
-			# assign the array element previously holding obj func score as rank
-			parameter_set[-1] = rank
 			# (next two lines) for each integer in rank +1 to next_generation
-			next_generation << parameter_set if rank >= 1
-			next_generation << parameter_set if rank.to_i == 2
+			next_generation << [parameter_set, rank] if rank >= 1.0
+			next_generation << [parameter_set, rank] if rank == 2.0
 			# for decimal allow random reproduction (based on size of decimal)
-			next_generation << parameter_set if rank.modulo(1) > rand
+			next_generation << [parameter_set, rank] if rank.modulo(1) > rand
 			counter += 1
 		end
 		# return new @current_generation
@@ -77,60 +112,44 @@ class GeneticAlgorithm
 
 	def crossover
 		def mating_process(mother, father)
-			children = [[],[]]
+			children = [{}, {}]
 			counter = 0
-			mother.each do |mother_element|
-				#puts rand
+			mother[0].each do |mother_key, mother_value|
 				if rand <= 0.5
-					children[0] << mother_element
-					children[1] << father[counter]
+					children[0][mother_key.to_sym] = mother_value
+					children[1][mother_key.to_sym] = father[0][mother_key.to_sym]
 				else
-					children[0] << father[counter]
-					children[1] << mother_element
+					children[0][mother_key.to_sym] = father[0][mother_key.to_sym]
+					children[1][mother_key.to_sym] = mother_value
 				end
 				counter += 1
 			end
 			return children
 		end
-		puts @current_generation.length
-		pp @current_generation
 		# mate the best quarter with the best half
-		best_quarter_num = (@current_generation.length.to_f/4.0).floor
-		puts "best quar #{best_quarter_num}"
-		best_half_num = (@current_generation.length.to_f/2.0).ceil
-		puts "best half #{best_half_num}"
-		best_quarter = []
-		best_half = []
+		best_quarter_num = (@current_generation.length.to_f/4.0).ceil
+		best_half_num = best_quarter_num
 
-		counter = 1
-		@current_generation.reverse!.each do |parameter_set|
-			if counter <= best_quarter_num
-				best_quarter << parameter_set 
-			elsif counter <= best_half_num
-				best_half << parameter_set
-			else
-				break
-			end
-			counter +=1
-		end
+		best_quarter = @current_generation[-best_quarter_num..-1]
+		best_half = @current_generation[-(best_quarter_num+best_half_num)..-(best_quarter_num+1)]
 		children = []
 		best_quarter.each do |father|
-			mother_index_mated = rand(best_half.length())
-			twins = mating_process(best_half[mother_index_mated], father)
-			pp twins
-			children << twins[0] + twins[1]
-			best_half.delete_at(mother_index_mated)
+			tt = best_half.shuffle!.pop
+			twins = mating_process(tt, father)
+			children += twins.map{|value| [value]}
 		end
-		current_generation_temp = []
-		
-		puts "children"
-		pp children
-		#pp best_quarter
-		#puts "best half"
-		#pp best_half
-
-		# mutate children
-		# return new @current_generation
+		(-children.length..-1).each do |num|
+			@current_generation.delete_at(num)
+		end
+		children.each do |child|
+			child.each do |element|
+				if @MUTATION_RATE > rand
+					# ... mutate the element
+				end
+			end
+		end
+		@current_generation += children
+		return true
 	end
 
 	def hillwalk
@@ -139,13 +158,21 @@ class GeneticAlgorithm
 		# this random effect is heavily increased near end time
 	end
 end
-
+def read_file(file_name)
+  file = File.open(file_name, "r")
+  data = file.read
+  file.close
+  return data
+end
 
 objective_function = Proc.new { |parameter_set|
-	score = nil
-	# optimise csv reading ##
-	CSV.foreach("objectiveFunctionOutput1.csv") do |c|
-		score = c[42].to_f/c[39].to_f if c[0].to_i == parameter_set[0]
+	score = 0
+	prev_value = 0
+	parameter_set[0].each do |key, value|
+		next if value == nil
+		score +=1 if value%3 == 0
+		score +=2 if value > prev_value
+		prev_value = value
 	end
 	score
 }
