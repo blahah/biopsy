@@ -9,14 +9,15 @@ end
 
 
 class GeneticAlgorithm
-	def initialize(parameter_range, objective_function, time_limit=nil)
+	def initialize(options, objective_function, time_limit=nil)
 		# the number of times objective function is applied per generation
 		@evaluations_per_generation = 2
 		@population_size = 10
 		@MUTATION_RATE = 0.01
 		@THREADS = 1
-		@parameter_range = parameter_range
-		#pp @parameter_range
+		@options = options
+		parameter_sweep = ParameterSweeper.new(options)
+		@parameter_range = parameter_sweep.showparams
 		# set.map {|key, value| value}
 		#@parameter_range = []
 		#parameter_range.each do |set|
@@ -41,20 +42,21 @@ class GeneticAlgorithm
 			#puts @objective_function.call(param)
 		#end
 		puts "-----#{@current_generation.length}----START"
-		(1..1000).each do |num|
+		(1..12).each do |num|
 			# puts "---------------------#{num}-----------------------------------------"
 			selection_process
 			# puts "-------------------CROSSOVER:----------------------------------------"
 			crossover
 			# ppp @current_generation
-			if num%100 == 0
+			#if num%100 == 0
 				puts "-----#{@current_generation.length}----"
 				prev_score = 0
 				@current_generation.each do |param|
+					pp @current_generation
 					prev_score = @objective_function.call(param) if @objective_function.call(param) > prev_score
 				end
 				puts prev_score
-			end
+			#end
 			# puts "--------------------end #{num}--------------------------------------"
 		end
 		puts "-----#{@current_generation.length}----END"
@@ -78,13 +80,36 @@ class GeneticAlgorithm
 		# average time
 		return (time/parameters_to_test)
 	end
+
+	def generateMutation(chromosome = false)
+		if !@mutation_wheel
+			@mutation_wheel = [{}, 0]
+			total_param_ranges = 0
+			@options[:parameters].each do |key, value|
+				next if value.length <= 1
+				total_param_ranges += value.length
+				@mutation_wheel[0][key.to_sym] = total_param_ranges
+			end
+			@mutation_wheel[1] = total_param_ranges
+		end
+		mutation_location = rand(1..@mutation_wheel[1])
+		temp_options_params = Marshal.load(Marshal.dump(@options[:parameters]))
+		@mutation_wheel[0].each do |key, value|
+			next if value < mutation_location
+			temp_options_params[key.to_sym].delete(chromosome[0][0][key.to_sym])
+			chromosome[0][0][key.to_sym] = temp_options_params[key.to_sym].sample(1)[0]
+			break
+		end
+		return chromosome
+	end
 	# ----remainder stochastic sampling (stochastic universal sampling method)----
 	# apply obj function on parameter_sets, rank parameter_sets by obj func score
 	# scale obj func score to ranking where: highest rank=2, lowest rank=0
 	# for each integer in rank reproduce += 1, for decimal allow random reproduction (based on size of decimal)
 	def selection_process
-		# apply objective function on parameter sets
 		current_generation_temp = []
+
+		#apply obj func on all params, store score in @current_generation[X][1]
 		@current_generation.each do |parameter_set|
 			current_generation_temp << [parameter_set[0], @objective_function.call(parameter_set)]
 		end
@@ -99,30 +124,34 @@ class GeneticAlgorithm
 		@current_generation.each do |parameter_set, score|
 			# rank (asc) is the order in which the element appears (counter) times step_size so that the max is 2
 			rank = counter * step_size
-			# (next two lines) for each integer in rank +1 to next_generation
 			next_generation << [parameter_set, rank] if rank >= 1.0
-			next_generation << [parameter_set, rank] if rank == 2.0
-			# for decimal allow random reproduction (based on size of decimal)
-			next_generation << [parameter_set, rank] if rank.modulo(1) > rand
+			next_generation << [parameter_set, rank] if rank >= 2.0
+			next_generation << [parameter_set, rank] if rand <= rank.modulo(1)
 			counter += 1
 		end
-		# return new @current_generation
+		# if population is too small
+		if @population_size-next_generation.length > @population_size/4
+			chromosome = next_generation.shuffle.pop
+			next_generation << [chromosome[0], chromosome[1]] if rand <= chromosome[1]
+		# if population is too big
+		elsif next_generation.length-@population_size > @population_size/4
+			chromosome = next_generation.shuffle.pop
+			next_generation.slice!(next_generation.index([chromosome[0], chromosome[1]])) if rand <= (2.0-chromosome[1])
+		end
 		@current_generation = next_generation
 	end
 
 	def crossover
 		def mating_process(mother, father)
-			children = [{}, {}]
-			counter = 0
-			mother[0].each do |mother_key, mother_value|
+			children = [[[{}]], [[{}]]]
+			mother[0][0].each do |mother_key, mother_value|
 				if rand <= 0.5
-					children[0][mother_key.to_sym] = mother_value
-					children[1][mother_key.to_sym] = father[0][mother_key.to_sym]
+					children[0][0][0][mother_key.to_sym] = mother_value
+					children[1][0][0][mother_key.to_sym] = father[0][0][mother_key.to_sym]
 				else
-					children[0][mother_key.to_sym] = father[0][mother_key.to_sym]
-					children[1][mother_key.to_sym] = mother_value
+					children[0][0][0][mother_key.to_sym] = father[0][0][mother_key.to_sym]
+					children[1][0][0][mother_key.to_sym] = mother_value
 				end
-				counter += 1
 			end
 			return children
 		end
@@ -136,16 +165,15 @@ class GeneticAlgorithm
 		best_quarter.each do |father|
 			tt = best_half.shuffle!.pop
 			twins = mating_process(tt, father)
-			children += twins.map{|value| [value]}
+			children += twins.map{|value| value}
 		end
 		(-children.length..-1).each do |num|
 			@current_generation.delete_at(num)
 		end
 		children.each do |child|
-			child.each do |element|
-				if @MUTATION_RATE > rand
-					# ... mutate the element
-				end
+			if @MUTATION_RATE > rand
+				#pp child
+				generateMutation(child)
 			end
 		end
 		@current_generation += children
@@ -208,8 +236,8 @@ options = {
   },
   # parameters to be sweeped
   :parameters => {
-    :K => (21..29).step(8).to_a,
-    :M => (0..1).to_a, # def 1, min 0, max 3 #k value
+    :K => (21..29).step(2).to_a,
+    :M => (0..10).to_a, # def 1, min 0, max 3 #k value
     :d => (0..2).step(2).to_a, # KmerFreqCutoff: delete kmers with frequency no larger than (default 0)
     :D => (0..2).step(2).to_a, # edgeCovCutoff: delete edges with coverage no larger than (default 1)
     :G => (25..75).step(50).to_a, # gapLenDiff(default 50): allowed length difference between estimated and filled gap
@@ -219,7 +247,6 @@ options = {
     :p => 1,
   }
 }
-soapdt = ParameterSweeper.new(options, soap_constructor)
 
-apply = GeneticAlgorithm.new(soapdt.showparams, objective_function)
+apply = GeneticAlgorithm.new(options, objective_function)
 apply.run
