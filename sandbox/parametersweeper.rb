@@ -47,7 +47,7 @@ class ParameterSweeper
 
   # apply the parameter sweep on the algorithm and save results appropriately
   def run(groupsize, continue_on_crash=false)
-    Dir.chdir('outputdata_refactor1') do
+    Dir.chdir('outputdata_refactor') do
       # generate the combinations of parameters to be applied to soapdt, stored in @input_parameters[:parameters]
       generate_combinations
       puts "Will perform #{@parameter_counter} assemblies"
@@ -129,7 +129,7 @@ class ParameterSweeper
       # @options.map{|key, value| opts[key.to_sym]}
       #  the options that the user wants to vary is saved in @options
       #  opts[key] will contain the value of each option for this current parameter set
-      @input_combinations << [opts, @parameter_counter]
+      @input_combinations += [[{}.merge!(opts)] + [@parameter_counter]]
       @parameter_counter += 1
       return
     end
@@ -166,6 +166,7 @@ soap_constructor = Proc.new { |input_hash|  # make config file if doesn't alread
   constructor += input_hash[:parameters].map {|key, value| " -#{key} #{value}"}.join(",").gsub(",", "")
   constructor
 }
+=begin
 options = {
   # settings to be passed to the constructor
   :settings => {
@@ -191,3 +192,4 @@ options = {
 }
 soapdt = ParameterSweeper.new(options, soap_constructor)
 soapdt.run(200.00)
+=end
