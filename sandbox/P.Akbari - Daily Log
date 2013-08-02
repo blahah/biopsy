@@ -72,7 +72,15 @@ Attempting to hack together the three objective functions and outputdata file, c
 	Rewrote code, chromosomes now stored as hashes
 	population size regulated, by pushing pop size up or down based on deviation from initial population size
 	Begun thinking about mutation script, will implement tomorrow
-	
+----02/06/2013----
+	Updated parameter sweep to store assembly number alongside parameter set in an array [0] -> parameterset [1]-> assembly number
+		updated genetic_algorithm to accomodate this change
+	Added mutation to genetic algorithm
+	Current chromosome data structure:
+		[[{PARAMETER SET}, ASSEMBLY_ID], SCORE/RANK]
+
 	TODO:
-		Mutation
+		TEST CHANGES MADE ON 02/06
+		Find assembly number for generated children and add this to hash
+		Make a list of assembly_numbers which have undergone objective function
 		Storing precomputed parameter scores
