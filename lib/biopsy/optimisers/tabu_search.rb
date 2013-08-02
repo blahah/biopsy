@@ -1,6 +1,12 @@
 require 'rubystats'
 require 'set'
 
+# TODO:
+# - make distributions draw elements from the range, not just from distribution
+# - capture data about how SD is changing
+# - capture data about convergence
+# - test on real SOAPdt data
+
 module BiOpSy
 
   # a Distribution represents the probability distribution from
