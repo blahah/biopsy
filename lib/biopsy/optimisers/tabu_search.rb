@@ -17,7 +17,7 @@ module BiOpSy
     # create a new Distribution
     def initialize(mean, range, increment)
       @mean = mean
-      @sd = range.size / 3 # this is arbitrary - should we learn a good initial setting?
+      @sd = range.size / 30.0 # this is arbitrary - should we learn a good initial setting?
       @range = range
       @increment = increment
       self.generate_distribution
@@ -38,13 +38,22 @@ module BiOpSy
     # tighten the distribution by reducing the sd
     # and regenerating
     def tighten
-      @sd -= @increment * @range.size
+      @sd -= @increment * @range.size unless (@sd <= 0.5)
       self.generate_distribution
     end
 
     # draw from the distribution
     def draw
-      @dist.rng
+      r = @dist.rng.to_i
+      # keep the value inside the allowed range
+      r = @range.size - r if r >= @range.size
+      r = 0 - r if r < 0
+      # discretise
+      @range.each_with_index do |v, i|
+        if i >= r
+          return v
+        end
+      end
     end
 
   end # Distribution
@@ -79,6 +88,7 @@ module BiOpSy
         if n >= 10
           # taking too long to generate a neighbour, 
           # loosen the neighbourhood structure so we explore further
+          p "loosening distributions"
           @distributions.each do |param, dist|
             dist.loosen
           end
@@ -125,7 +135,7 @@ module BiOpSy
   # space with costly objective evaluation.
   class TabuSearch #< OptmisationAlgorithm
 
-    attr_reader :current, :best
+    attr_reader :current, :best, :hood_no
 
     def initialize(parameter_ranges, max_hood_size=50, time_limit=nil)
       @ranges = parameter_ranges
@@ -133,6 +143,7 @@ module BiOpSy
       # solution tracking
       @current = Hash[parameter_ranges.map { |param, range| [param, range.sample] }]
       @best = {:score => 0}
+
       # tabu list
       @tabu = Set.new
       @tabu_limit = nil
@@ -141,6 +152,7 @@ module BiOpSy
       @max_hood_size = 50
       self.define_neighbourhood_structure
       @current_hood = BiOpSy::Hood.new(@distributions, @max_hood_size, @tabu)
+      @hood_no = 1
     end # initialize
 
     # if not being controlled by RunController, #run
@@ -175,8 +187,9 @@ module BiOpSy
       @distributions = {}
       @increment = 0.1 # proportion of the range by which to increment the SD
       @current.each_pair do |param, value|
+        mean = @ranges[param].index(value)
         range = @ranges[param]
-        @distributions[param] = BiOpSy::Distribution.new(value, range, @increment)
+        @distributions[param] = BiOpSy::Distribution.new(mean, range, @increment)
       end
     end
 
@@ -185,12 +198,16 @@ module BiOpSy
     def update_neighbourhood_structure
       @current_hood.best[:parameters].each_pair do |param, value|
         range = @ranges[param]
+        p range
+        p value
         @distributions[param] = BiOpSy::Distribution.new(value, range, @increment)
       end
     end
 
     # shift to the next neighbourhood
     def next_hood
+      @hood_no += 1
+      p "entering hood # #{@hood_no}"
       self.update_neighbourhood_structure
       @current_hood = Hood.new(@distributions, @max_hood_size, @tabu)
     end
@@ -222,26 +239,97 @@ module BiOpSy
 end # BiOpSy
 
 
-# simple test (move to real testing env soon)
-ranges = {
-  :a => (1..100).to_a,
-  :b => (1..100).to_a,
-  :c => (1..50).to_a
+# # simple test (move to real testing env soon)
+# ranges = {
+#   :a => (1..100).to_a,
+#   :b => (1..100).to_a,
+#   :c => (1..50).to_a
+# }
+
+# #######
+# # simple test with convex three-parameter function
+# #######
+
+# tabu = BiOpSy::TabuSearch.new(ranges) 
+
+# def fake_objective(a, b, c)
+#   # should be easy - convex function taken from http://www.economics.utoronto.ca/osborne/MathTutorial/CVNF.HTM
+#   #  f (x1, x2, x3) = x12 + 2x22 + 3x32 + 2x1x2 + 2x1x3
+#   # optimum is a=100, b=100, c=50, score=57800
+#   a**2 + 2 * (b**2) + 3 * (c**2) + 2 * (a * b) + 2 * (a + c)
+# end
+
+# p tabu.current
+
+# res = []
+
+# (1..10000).each do |i|
+#   a, b, c = tabu.current[:a], tabu.current[:b], tabu.current[:c]
+#   score = fake_objective(a, b, c)
+#   # puts "a:#{a}, b:#{b}, c:#{c} => #{score}"
+#   tabu.run_one_iteration(tabu.current, score)
+#   res << [tabu.best, tabu.hood_no]
+# end
+
+# require 'csv'
+# CSV.open('fake_objective_opt.csv', 'w') do |csv|
+#   csv << %w(a b c hood_no score)
+#   res.each do |r, t|
+#     csv << r[:parameters].map { |k, v| v } + [t, r[:score]]
+#   end
+# end
+
+# p tabu.best
+
+########
+# test with n50 for SOAPdt dataset
+########
+require 'csv'
+
+# set parameters
+parameters = {
+  :K => (45..77).step(8).to_a,
+  :M => (0..3).to_a, # def 1, min 0, max 3 #k value
+  :d => (0..6).step(2).to_a, # KmerFreqCutoff: delete kmers with frequency no larger than (default 0)
+  :D => (0..6).step(2).to_a, # edgeCovCutoff: delete edges with coverage no larger than (default 1)
+  :e => (2..12).step(5).to_a, # contigCovCutoff: delete contigs with coverage no larger than (default 2)
+  :t => (2..12).step(5).to_a, # locusMaxOutput: output the number of transcriptome no more than (default 5) in one locus
 }
 
-tabu = BiOpSy::TabuSearch.new(ranges) 
+p parameters[:K]
 
-def fake_objective(a, b, c)
-  # should be easy - convex function taken from http://www.economics.utoronto.ca/osborne/MathTutorial/CVNF.HTM
-  #  f (x1, x2, x3) = x12 + 2x22 + 3x32 + 2x1x2 + 2x1x3
-  a**2 + 2 * (b**2) + 3 * (c**2) + 2 * (a * b) + 2 * (a + c)
+# load test set
+testset = {}
+
+first = true
+head = nil
+CSV.open('first_set.csv', 'r').each do |line|
+  if first
+    head = line.map { |s| s.to_sym }[0..5]
+    first = false
+    next
+  end
+  key = line[0..5].join(':')
+  value = line[6]
+  testset[key] = value.to_i
 end
 
-p tabu.current
+# setup
+tabu = BiOpSy::TabuSearch.new(parameters) 
+
+# run
+res = []
 
 (1..10000).each do |i|
-  a, b, c = tabu.current[:a], tabu.current[:b], tabu.current[:c]
-  score = fake_objective(a, b, c)
+  key = head.map { |s| tabu.current[s] }.join(':')
+  unless testset.has_key? key
+    p "key not found: #{key}" 
+    p "current: #{tabu.current}"
+  end
+  score = testset[key]
   # puts "a:#{a}, b:#{b}, c:#{c} => #{score}"
   tabu.run_one_iteration(tabu.current, score)
+  res << [tabu.best, tabu.hood_no]
 end
+
+p tabu.best
