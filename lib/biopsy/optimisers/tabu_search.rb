@@ -1,11 +1,13 @@
 require 'rubystats'
+require 'methadone'
 require 'set'
 
 # TODO:
-# - make distributions draw elements from the range, not just from distribution
-# - capture data about how SD is changing
-# - capture data about convergence
-# - test on real SOAPdt data
+# - make distributions draw elements from the range, not just from distribution (DONE)
+# - test on real SOAPdt data (in progress)
+# - make code to run 100 times for a particular dataset, capture the trajectory, and plot the progress over time along with a histogram of the data distribution
+# - plot SD and step-size over time
+# - capture data about convergence (done for toy data, need to repeat for other data)
 
 module BiOpSy
 
@@ -13,6 +15,8 @@ module BiOpSy
   # which the next value of a parameter is drawn. The set of all
   # distributions acts as a probabilistic neighbourhood structure.
   class Distribution
+
+    include Methadone::CLILogging
 
     # create a new Distribution
     def initialize(mean, range, increment)
@@ -64,6 +68,8 @@ module BiOpSy
   # structure.
   class Hood
 
+    include Methadone::CLILogging
+
     attr_reader :best
 
     def initialize(distributions, max_size, tabu)
@@ -88,7 +94,7 @@ module BiOpSy
         if n >= 10
           # taking too long to generate a neighbour, 
           # loosen the neighbourhood structure so we explore further
-          p "loosening distributions"
+          debug("loosening distributions")
           @distributions.each do |param, dist|
             dist.loosen
           end
@@ -134,6 +140,8 @@ module BiOpSy
   # learning heuristic for optimising over an unconstrained parameter
   # space with costly objective evaluation.
   class TabuSearch #< OptmisationAlgorithm
+
+    include Methadone::CLILogging
 
     attr_reader :current, :best, :hood_no
 
@@ -197,17 +205,16 @@ module BiOpSy
     # distributions according to total performance of each parameter
     def update_neighbourhood_structure
       @current_hood.best[:parameters].each_pair do |param, value|
+        mean = @ranges[param].index(value)
         range = @ranges[param]
-        p range
-        p value
-        @distributions[param] = BiOpSy::Distribution.new(value, range, @increment)
+        @distributions[param] = BiOpSy::Distribution.new(mean, range, @increment)
       end
     end
 
     # shift to the next neighbourhood
     def next_hood
       @hood_no += 1
-      p "entering hood # #{@hood_no}"
+      debug("entering hood # #{@hood_no}")
       self.update_neighbourhood_structure
       @current_hood = Hood.new(@distributions, @max_hood_size, @tabu)
     end
@@ -217,7 +224,7 @@ module BiOpSy
       @current = @current_hood.next
       # exhausted the neighbourhood?
       if @current_hood.last?
-        p @current_hood.best
+        debug(@current_hood.best)
         self.next_hood
       end
     end
@@ -288,7 +295,7 @@ require 'csv'
 
 # set parameters
 parameters = {
-  :K => (45..77).step(8).to_a,
+  :K => (21..77).step(8).to_a,
   :M => (0..3).to_a, # def 1, min 0, max 3 #k value
   :d => (0..6).step(2).to_a, # KmerFreqCutoff: delete kmers with frequency no larger than (default 0)
   :D => (0..6).step(2).to_a, # edgeCovCutoff: delete edges with coverage no larger than (default 1)
@@ -296,40 +303,89 @@ parameters = {
   :t => (2..12).step(5).to_a, # locusMaxOutput: output the number of transcriptome no more than (default 5) in one locus
 }
 
-p parameters[:K]
-
 # load test set
 testset = {}
 
 first = true
 head = nil
-CSV.open('first_set.csv', 'r').each do |line|
+all = []
+metrics = {
+  'n50' => 591,
+  'largest' => 2105,
+  'rba_result' => 839,
+  'brm_paired' => 34428,
+}
+
+CSV.open('../../../sandbox/soapdt_sweep/test_set.csv', 'r').each do |line|
   if first
     head = line.map { |s| s.to_sym }[0..5]
     first = false
     next
   end
   key = line[0..5].join(':')
-  value = line[6]
-  testset[key] = value.to_i
+  value = Hash[%w(n50 largest rba_result brm_paired).zip(line[6..-1].map { |v| v.to_i })]
+  testset[key] = value
 end
 
 # setup
-tabu = BiOpSy::TabuSearch.new(parameters) 
+tabu = nil
 
 # run
-res = []
+res = {} # store the full output of each runlargest, rba_result, brm_paired, ut_result
 
-(1..10000).each do |i|
-  key = head.map { |s| tabu.current[s] }.join(':')
-  unless testset.has_key? key
-    p "key not found: #{key}" 
-    p "current: #{tabu.current}"
+opt_iter = {} # store the iteration at which the optimum was reached
+
+num_repeats = 100
+max_iterations = 1000
+
+metrics.each_pair do |metric, opt|
+  puts "testing #{metric} with #{num_repeats} repeats of max #{max_iterations} iterations"
+  mres = []
+  mopt_iter = []
+  (1..100).each do |runid|
+    tabu = BiOpSy::TabuSearch.new(parameters)
+    (1..1000).each do |iterid|
+      key = head.map { |s| tabu.current[s] }.join(':')
+      score = 0
+      if testset.has_key? key
+        unless key.split(':').size == 6
+          p "key not found: #{key}" 
+          p "current: #{tabu.current}"
+        end
+        score = testset[key][metric]
+      end
+      tabu.run_one_iteration(tabu.current, score)
+      if tabu.best.has_key? :parameters
+        mres << [tabu.best, tabu.hood_no, runid, iterid]
+      end
+      if tabu.best[:score] == opt
+        mopt_iter << iterid
+        break
+      end
+    end
   end
-  score = testset[key]
-  # puts "a:#{a}, b:#{b}, c:#{c} => #{score}"
-  tabu.run_one_iteration(tabu.current, score)
-  res << [tabu.best, tabu.hood_no]
+  res[metric] = mres
+  opt_iter[metric] = mopt_iter
 end
 
-p tabu.best
+res.each_pair do |metric, mres|
+  CSV.open("#{metric}.csv", 'w') do |csv|
+    csv << %w(runid iterid K M d D e t hood_no score)
+    mres.each do |r, t, runid, iterid|
+      begin
+        csv << [runid, iterid] + r[:parameters].map { |k, v| v } + [t, r[:score]]
+      rescue
+        p r
+      end
+    end
+  end
+end
+
+opt_iter.each_pair do |metric, mopt_iter|
+  CSV.open("#{metric}_opt_iter.csv", 'w') do |csv|
+    csv << ['mopt_iter']
+    mopt_iter.each do |m|
+      csv << [m]
+    end
+  end
+end
