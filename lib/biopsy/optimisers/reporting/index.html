@@ -1,0 +1,314 @@
+<html>
+<head>
+<link href='http://fonts.googleapis.com/css?family=Signika:400,700|Noticia+Text:400,400italic' rel='stylesheet' type='text/css'>
+<script src="js/d3.v3.min.js"></script>
+<script src="js/jquery.min.js"></script>
+<script src="js/bootstrap.min.js"></script>
+<link rel="stylesheet" href="css/bootstrap.min.css">
+<title>Optimisation visualiser</title>
+<style>
+
+body,
+html {
+  margin:0;
+  padding:0;
+  color:#000;
+  font-family: 'Noticia Text', serif;
+}
+
+h1 {
+  font-family: 'Signika', sans-serif;
+  font-size: 46;
+}
+
+header {
+  padding-left: 40px;
+  padding-top: 1px;
+  margin-top: -15px;
+  margin-bottom: -30px;
+  border: 0;
+}
+
+#wrap {
+  width:1150px;
+  margin:0 auto;
+}
+
+#left {
+  float:left;
+  width:150px;
+}
+
+#main {
+  float:left;
+  width:850px;
+}
+
+#sidebar {
+  float:left;
+  width:100px;
+}
+
+.vis {
+}
+
+.detail {
+  font-size: 15;
+}
+
+.datum {
+  font-size: 25;
+  color: forestgreen;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.x.axis path {
+  display: none;
+}
+
+.line {
+  fill: none;
+  stroke: grey;
+  stroke-width: 3.5px;
+  stroke-opacity: 0.1;
+}
+
+.bar rect {
+  fill: steelblue;
+  shape-rendering: crispEdges;
+}
+
+.bar text {
+  fill: #fff;
+}
+
+</style>
+</head>
+<body>
+<header>
+  <h1>Optimisation Visualiser</h1>
+</header>
+<div id="wrap">
+  <div id="left">
+    <div id='left_plot_title'>
+
+    </div>
+  </div>
+  <div id="main">
+    <div id='main_plot_title'>
+
+    </div>
+    <script>
+
+    var margin = {top: 20, right: 20, bottom: 30, left: 40},
+        width = 850 - margin.left - margin.right,
+        height = 500 - margin.top - margin.bottom;
+
+    var lmargin = {top: 20, right: 0, bottom: 30, left: 20},
+        lwidth = 150 - lmargin.left - lmargin.right,
+        lheight = 500 - lmargin.top - lmargin.bottom;
+
+    // main plot x
+    var x = d3.scale.linear()
+        .range([0, width]);
+
+    // left plot x
+    var lx = d3.scale.linear()
+        .range([0, lwidth]);
+
+    var y = d3.scale.linear()
+        .range([height, 0]);
+
+    var xAxis = d3.svg.axis()
+        .scale(x)
+        .orient("bottom")
+
+    var lxAxis = d3.svg.axis()
+        .scale(lx)
+        .ticks(2)
+        .orient("bottom")
+
+    var yAxis = d3.svg.axis()
+        .scale(y)
+        .orient("left");
+
+    var colour = d3.scale.category20();
+
+    var round = Math.round;
+
+    var line = d3.svg.line()
+        .x(function(d) { return x(d.iterid); })
+        .y(function(d) { return y(d.score); });
+
+    var mainsvg = d3.select("#main").append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+    var leftsvg = d3.select("#left").append("svg")
+        .attr("width", lwidth + lmargin.left + lmargin.right)
+        .attr("height", lheight + lmargin.top + lmargin.bottom)
+      .append("g")
+        .attr("transform", "translate(" + lmargin.left + "," + lmargin.top + ")");
+
+    var highlighted = null;
+
+    function highlightPath(t) {
+      if (highlighted !== null) {
+        unHighlightPath(highlighted);
+      }
+      t.transition()
+        .duration(50)
+        .style("stroke-opacity", 1.0)
+        .style("stroke", 'steelblue');
+      highlighted = t;
+    }
+
+    function unHighlightPath(t) {
+      t.transition()
+      .duration(50)
+      .style("stroke-opacity", .1)
+      .style("stroke", 'grey');
+    }
+
+      // A formatter for counts.
+    var formatCount = d3.format(",.0f");
+
+    d3.csv("n50.csv", function(error, data) {
+
+      var runs = [];
+
+      data.forEach(function(d) {
+        // ensure numbers are interpreted as numbers
+        d.runid = round(d.runid);
+        d.iterid = round(d.iterid);
+        d.hood_no = round(d.hood_no);
+        d.score = round(d.score);
+
+        runs.push(d.runid);
+      });
+
+      var d2 = {};
+
+      var format = d3.format("d");
+
+      var runname = function(d) {
+        return 'run' + d;
+      }
+
+      runs = d3.keys(d3.set(runs));
+
+      for (i in runs) {
+        d2[runname(runs[i])] = data.filter(function(d) { return d.runid == round(i)+1; });
+      }
+
+      colour.domain(d3.keys(d2));
+
+      runs = colour.domain().map(function(name) {
+        var scores = d2[name].map(function(d) {
+          return round(d.score);
+        });
+        return {
+          name: name,
+          max: d3.max(scores),
+          n: scores.length,
+          levels: scores.filter(function(v,i) { return i==scores.lastIndexOf(v); }).length,
+          values: d2[name].map(function(d) {
+            return { iterid: round(d.iterid), score: round(d.score) };
+          }),
+          params: d2[name].slice(scores.length - 1).map(function(d) {
+              return 'K: ' + d.K + ', M:' + d.M + ', d:' + d.d + ', D:' + d.D + ', e:' + d.e + ', t:' + d.t 
+          })
+        };
+      });
+
+      x.domain(d3.extent(data, function(d) { return round(d.iterid); }));
+      y.domain(d3.extent(data, function(d) { return round(d.score); }));
+
+      // main plot area
+      mainsvg.append("g")
+          .attr("class", "x axis")
+          .attr("transform", "translate(0," + height + ")")
+          .call(xAxis);
+
+      mainsvg.append("g")
+          .attr("class", "y axis")
+          .call(yAxis)
+        .append("text")
+          .attr("transform", "rotate(-90)")
+          .attr("y", 6)
+          .attr("dy", ".71em")
+          .style("text-anchor", "end")
+          .text("Score");
+
+      var run = mainsvg.selectAll(".run")
+          .data(runs)
+        .enter().append("g")
+          .attr("class", "run");
+
+      run.append("path")
+          .attr("class", "line")
+          .attr("d", function(d) { return line(d.values); })
+          .on('mouseover', function(d) { highlightPath(d3.select(this));
+            d3.select('#opt').text(d.max);
+            d3.select('#iter').text(d.n);
+            d3.select('#levels').text(d.levels);
+            d3.select('#params').text(d.params);
+           });
+    });
+
+    d3.csv("first_set.csv", function(error, data) {
+      distributions = {
+        'n50': [],
+        'time': [],
+        'largest': [],
+        'brm_paired': [],
+        'rba_result': []
+      };
+
+      data.forEach(function(d) {
+        distributions['n50'].push(d.n50)
+        distributions['time'].push(d.time)
+        distributions['largest'].push(d.largest)
+        distributions['brm_paired'].push(d.brm_paired)
+        distributions['rba_result'].push(d.rba_result)
+      });
+
+      // Generate a histogram using uniformly-spaced bins.
+      var data = d3.layout.histogram()
+        .bins(y.ticks(40))
+        (distributions['n50']);
+
+      lx.domain(d3.extent(data, function(d) { return round(d.y); }));
+
+      var bar = leftsvg.selectAll(".bar")
+          .data(data)
+        .enter().append("g")
+          .attr("class", "bar")
+          // .attr("transform", function(d) { return "translate(" + lx(d.y) + "," + y(d.x) + ")"; });
+
+      bar.append("rect")
+          .attr("y", function(d, i ) { return y(d.x) - 10; })
+          .attr("x", function(d, i ) { return lwidth - lx(d.y); })
+          .attr("width", function(d) { return lx(d.y); })
+          .attr("height", data[0].dx);
+    });
+
+    </script>
+  </div>
+  <div class="detail" id="sidebar">
+    <p><h3>Optimum:</h3> <span class='datum' id='opt'></span></p>
+    <p><h3>Iterations:</h3> <span class='datum' id='iter'></span></p>
+    <p><h3>Levels:</h3> <span class='datum' id='levels'></span></p>
+    <p><h3>Parameters:</h3> <span id='params'></span></p>
+  </div>
+</div>
+</body>
+</html>
