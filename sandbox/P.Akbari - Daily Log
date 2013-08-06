@@ -48,39 +48,59 @@ Attempting to hack together the three objective functions and outputdata file, c
 		Changed ../#{@assembly} to  ~/Code/biopsy/sandbox/#{@assembly}
 	Set chmod 777 to usearch in /apps/
 
-
 ----25/06/2013----
 	Reversed changes made yesterday
 	Debugged apply_objective_function.rb, script now works to apply objectivehandler.rb on all scafSeq output files
 	Modified /lib/biopsy/objectivehandler.rb to have 3 cleaup states, no cleanup, clean all but essential output files, or clean all
 	Ran objectivehandler script on output on local PC and cluster
+
 ----26/06/2013----
 	Discussed biopsy and chain projects with R.Smith, drew up plan
 	Began visualising data in R,  3D scatter plots of output with color variant
+
 ----29/06/2013----
 	Completed 3D scatter plot
 	Discussed applicaton of genetic algorithm to biopsy, began reading about genetic algorithms
+
 ----30/06/2013----
 	Began basic implementation of genetic algorithm in ruby.
 	Considering how to base initial variables (pop size, hillwalking, selection rate) based on user defined time constraint
 	Began writing the selection process used by the genetic algorithm
+
 ----31/06/2013----
 	Completed selection process
 	Completed crossover
 	Pre-alpha Genetic Algorithm without mutation functionality working
+
 ----01/07/2013----
 	Rewrote code, chromosomes now stored as hashes
 	population size regulated, by pushing pop size up or down based on deviation from initial population size
 	Begun thinking about mutation script, will implement tomorrow
-----02/06/2013----
+
+----02/07/2013----
 	Updated parameter sweep to store assembly number alongside parameter set in an array [0] -> parameterset [1]-> assembly number
 		updated genetic_algorithm to accomodate this change
 	Added mutation to genetic algorithm
 	Current chromosome data structure:
 		[[{PARAMETER SET}, ASSEMBLY_ID], SCORE/RANK]
 
-	TODO:
-		TEST CHANGES MADE ON 02/06
-		Find assembly number for generated children and add this to hash
-		Make a list of assembly_numbers which have undergone objective function
-		Storing precomputed parameter scores
+----05/07/2013----
+	Refactor code to show chromosomes as {:parameter_set => , scoreOrRank => }
+	Fixed multipule bugs
+	Applied algorithm on n50 test dataset
+	parameter sets will not undergo objective function multipule times
+
+-----06/07/2013----
+	Refactoring code to fit around wrapper used in biopsy (genetic_algorithm_refactor.rb)
+	class Generation <- holds a generation, new initialize each generation
+	class GenerationAlgorithm <- Wraps around Generation class. Passed in @population_size chromosomes upon which update_ga method is fired and
+	... a array of chromosomes is returned (this is the end of a generation)
+	Fixed population variation
+	GA Refactor working!
+	TODO-TOMORROW:
+		Produce csv file in Richards format to begin plotting data
+		Prevent domination of local optima (causing us to then rely on mutation to reach global optimum)
+		? - Reduce selective pressure as population becomes more homogenous (at the moment domination occurs too quickly)
+			A function to measure homogenosity
+		? - Catastrophic event causing mass mutation in most chromosomes when too homogenous
+		? - Both
