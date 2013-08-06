@@ -8,7 +8,7 @@ class Generation
 		@population_size = population_size
 		@current_generation = []
 		@ranges = parameter_ranges
-		@MUTATION_RATE = 0.1
+		@MUTATION_RATE = 0.2
     @best = {
       :parameters => nil,
       :score => 0.0
@@ -77,13 +77,13 @@ class Generation
 			counter += 1
 		end
 		# if population is too small
-		if @population_size-next_generation.length > @population_size/4
-			chromosome = next_generation.shuffle.pop
-			next_generation << chromosome if rand <= chromosome[:score]
-		# if population is too big
-		elsif next_generation.length-@population_size > @population_size/4
-			chromosome = next_generation.shuffle.pop
-			next_generation.slice!(next_generation.index(chromosome)) if rand <= (2.0-chromosome[:score])
+		while next_generation.length < @population_size
+			select_chromosome = next_generation.sample(1)[0]
+			next_generation << select_chromosome
+		end
+		while next_generation.length > @population_size
+			select_chromosome_index = next_generation.index(next_generation.sample(1)[0])
+			next_generation.delete_at(select_chromosome_index)
 		end
 		# sort @current_generation by objective function score (ASC), replace @current_generation w/ temporary array
 		@current_generation = next_generation.sort {|a, b| a[:score] <=> b[:score]}
@@ -275,13 +275,10 @@ pop_size = 5
 res = ""
 count = 0
 GA = GeneticAlgorithm.new(pop_size, parameters)
-(1..10).each do |num|
-	puts "num is #{num}"
+(1..100).each do |num|
 	if res.is_a? Array
-		puts "array!"
 		count += 1
-		puts "count is #{count}"
-		puts "GENERATION->#{GA.best[:score]}"
+		puts "GENERATION->#{GA.best[:score]}" if count%10 == 0
 		res_temp = Marshal.load(Marshal.dump(res))
 		res_temp.each do |parameter_set|
 			res = GA.run_one_iteration(parameter_set[:parameters], get_score(parameter_set[:parameters], testset))
@@ -292,5 +289,3 @@ GA = GeneticAlgorithm.new(pop_size, parameters)
 		res = GA.run_one_iteration(parameter_set, score)
 	end
 end
-#puts GA.get_population
-#puts GA.best
