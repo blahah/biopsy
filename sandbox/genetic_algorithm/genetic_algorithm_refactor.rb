@@ -2,9 +2,10 @@ require 'pp'
 require 'csv'
 
 class Generation
-	attr_reader :best
+	attr_reader :best, :population_homogenosity
 
 	def initialize (population_size, parameter_ranges)
+		@population_homogenosity = 0
 		@population_size = population_size
 		@current_generation = []
 		@ranges = parameter_ranges
@@ -30,6 +31,7 @@ class Generation
 	end
 
 	def run_generation
+		#homogeneous_test
 		#puts "STARTING GENERATION #{@current_generation.length}"
 		#pp @current_generation
 		selection_process
@@ -120,7 +122,7 @@ class Generation
 		@current_generation += children
 		return true
 	end
-	def generateMutation(chromosome)
+	def generateMutation chromosome
 		if !@mutation_wheel
 			@mutation_wheel = [{}, 0]
 			total_param_ranges = 0
@@ -141,17 +143,19 @@ class Generation
 		end
 		return chromosome
 	end
-	def homogeneous population
+	def homogeneous_test
 		homo_val = 0
-		(0..(population.length-1)).each do |i|
-		   (i..(population.length-1)).each do |j|
+		(0..(@current_generation.length-1)).each do |i|
+		   (i..(@current_generation.length-1)).each do |j|
 		   		next if i == j
-		   		population[i][:parameters].each do |key, val|
-		   			homo_val += 1 if val == population[j][:parameters][key.to_sym]
+		   		@current_generation[i][:parameters].each do |key, val|
+		   			homo_val += 1 if val == @current_generation[j][:parameters][key.to_sym]
 		   		end
 		    end
 		end
-		return (homo_val/(population.length*population[0][:parameters].length).to_f)
+		n_value = @current_generation.length-1
+		sum = (n_value/2)*(n_value+1)
+		@population_homogenosity = (homo_val/(sum*@current_generation[0][:parameters].length).to_f)
 	end
 	def get_population
 		if self.last?
@@ -162,7 +166,7 @@ class Generation
 	end
 end
 class GeneticAlgorithm
-	attr_reader :current, :best, :generation_no
+	attr_reader :current, :best, :generation_no, :get_homog
 
 	def initialize (population_size, parameter_ranges)
 		@ranges = parameter_ranges
@@ -208,6 +212,8 @@ class GeneticAlgorithm
 	def update_ga
 		# ... will run to next generation
 		store = @current_generation.run_generation
+		@current_generation.homogeneous_test
+		@get_homog = @current_generation.population_homogenosity
 		@current_generation = Generation.new(@population_size, @ranges)
 		return store
 	end
@@ -279,32 +285,42 @@ def get_score (parameters, testset)
 	return score
 end
 
-pop_size = 50
+pop_size = 25
 res = ""
 count = 0
 $iterid = 0
 $already_done = {}
-csv_return = ["runid","iterid","K","M","d","D","e","t","generation_no","score"]
-GA = GeneticAlgorithm.new(pop_size, parameters)
-(1..10).each do |num|
-	if res.is_a? Array
-		count += 1
-		puts "BEST GA->#{GA.best[:score]} iter=#{$iterid}" #if count%10 == 0
-		csv_return << 
-		res_temp = Marshal.load(Marshal.dump(res))
-		res_temp.each do |parameter_set|
-			res = GA.run_one_iteration(parameter_set[:parameters], get_score(parameter_set[:parameters], testset))
-		end
-	else
-		(1..pop_size).each do |n|
-			parameter_set = GA.generate_chromosome
-			score = get_score(parameter_set, testset)
-			res = GA.run_one_iteration(parameter_set, score)
+csv_return = [["runid","iterid","K","M","d","D","e","t","generation_no","score", "homogenity"]]
+GA = []
+(1..10).each do |runid|
+	GA[runid] = GeneticAlgorithm.new(pop_size, parameters)
+	$iterid = 0
+	res = ""
+	$already_done = {}
+	#csv_return << []
+	(1..10).each do |num|
+		if res.is_a? Array
+			count += 1
+			#puts "runid: #{runid} iterid: #{$iterid} params: #{GA[runid].best[:parameters].map {|key, value| value}} generation: #{num} score: #{GA[runid].best[:score]} homog: #{GA[runid].get_homog}" #if count%10 == 0
+			csv_return << [runid, $iterid] + GA[runid].best[:parameters].map {|k, v| v} + [num, GA[runid].best[:score], GA[runid].get_homog]
+			res_temp = Marshal.load(Marshal.dump(res))
+			res_temp.each do |parameter_set|
+				res = GA[runid].run_one_iteration(parameter_set[:parameters], get_score(parameter_set[:parameters], testset))
+			end
+		else
+			(1..pop_size).each do |n|
+				parameter_set = GA[runid].generate_chromosome
+				score = get_score(parameter_set, testset)
+				res = GA[runid].run_one_iteration(parameter_set, score)
+			end
+			#puts "runid: #{runid} iterid: #{$iterid} params: #{GA[runid].best[:parameters].map {|key, value| value}} generation: #{num} score: #{GA[runid].best[:score]} homog: #{GA[runid].get_homog}" #if count%10 == 0
+			csv_return << [runid, $iterid] + GA[runid].best[:parameters].map {|k, v| v} + [num, GA[runid].best[:score], GA[runid].get_homog]
 		end
 	end
 end
 
-# duplicates
-# chromosomes w/ one difference
-# chromosomes w/ two differences
-# ....
+CSV.open('dataset.csv', 'w') do |csv_file|
+	csv_return.each do |line|
+		csv_file << line
+	end
+end
