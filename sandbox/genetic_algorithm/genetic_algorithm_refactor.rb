@@ -8,7 +8,7 @@ class Generation
 		@population_size = population_size
 		@current_generation = []
 		@ranges = parameter_ranges
-		@MUTATION_RATE = 0.2
+		@MUTATION_RATE = 0.1
     @best = {
       :parameters => nil,
       :score => 0.0
@@ -53,13 +53,6 @@ class Generation
 			current_generation_temp << {:parameters => chromosome[:parameters], :score => chromosome[:score]}
 		end
 		# sort @current_generation by objective function score (ASC), replace @current_generation w/ temporary array
-		current_generation_temp.each do |set|
-			if set[:score].is_a? Hash
-				puts "hash here"
-				pp current_generation_temp
-				abort('now')
-			end
-		end
 		@current_generation = current_generation_temp.sort {|a, b| a[:score] <=> b[:score]}
 		# the highest rank is 2.0, generate step_size (difference in rank between each element)
 		step_size = 2.0/(@current_generation.length-1)
@@ -148,7 +141,17 @@ class Generation
 		end
 		return chromosome
 	end
-	def test
+	def homogeneous population
+		homo_val = 0
+		(0..(population.length-1)).each do |i|
+		   (i..(population.length-1)).each do |j|
+		   		next if i == j
+		   		population[i][:parameters].each do |key, val|
+		   			homo_val += 1 if val == population[j][:parameters][key.to_sym]
+		   		end
+		    end
+		end
+		return (homo_val/(population.length*population[0][:parameters].length).to_f)
 	end
 	def get_population
 		if self.last?
@@ -260,6 +263,10 @@ end
 
 def get_score (parameters, testset)
 	key = parameters.map {|key,value| value.to_s}.join(":")
+	if $already_done[key.to_sym]
+		return $already_done[key.to_sym]
+	end
+	$iterid += 1
 	score = 0
 	if testset.has_key? key
 	  unless key.split(':').size == 6
@@ -268,24 +275,36 @@ def get_score (parameters, testset)
 	  end
 	  score = testset[key]["n50"]
 	end
+	$already_done[key.to_sym] = score
 	return score
 end
 
-pop_size = 5
+pop_size = 50
 res = ""
 count = 0
+$iterid = 0
+$already_done = {}
+csv_return = ["runid","iterid","K","M","d","D","e","t","generation_no","score"]
 GA = GeneticAlgorithm.new(pop_size, parameters)
-(1..100).each do |num|
+(1..10).each do |num|
 	if res.is_a? Array
 		count += 1
-		puts "GENERATION->#{GA.best[:score]}" if count%10 == 0
+		puts "BEST GA->#{GA.best[:score]} iter=#{$iterid}" #if count%10 == 0
+		csv_return << 
 		res_temp = Marshal.load(Marshal.dump(res))
 		res_temp.each do |parameter_set|
 			res = GA.run_one_iteration(parameter_set[:parameters], get_score(parameter_set[:parameters], testset))
 		end
 	else
-		parameter_set = GA.generate_chromosome
-		score = get_score(parameter_set, testset)
-		res = GA.run_one_iteration(parameter_set, score)
+		(1..pop_size).each do |n|
+			parameter_set = GA.generate_chromosome
+			score = get_score(parameter_set, testset)
+			res = GA.run_one_iteration(parameter_set, score)
+		end
 	end
 end
+
+# duplicates
+# chromosomes w/ one difference
+# chromosomes w/ two differences
+# ....
