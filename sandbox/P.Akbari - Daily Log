@@ -93,7 +93,7 @@ Attempting to hack together the three objective functions and outputdata file, c
 -----06/07/2013----
 	Refactoring code to fit around wrapper used in biopsy (genetic_algorithm_refactor.rb)
 	class Generation <- holds a generation, new initialize each generation
-	class GenerationAlgorithm <- Wraps around Generation class. Passed in @population_size chromosomes upon which update_ga method is fired and
+	class GeneticAlgorithm <- Wraps around Generation class. Passed in @population_size chromosomes upon which update_ga method is fired and
 	... a array of chromosomes is returned (this is the end of a generation)
 	Fixed population variation
 	GA Refactor working!
@@ -104,3 +104,14 @@ Attempting to hack together the three objective functions and outputdata file, c
 			A function to measure homogenosity
 		? - Catastrophic event causing mass mutation in most chromosomes when too homogenous
 		? - Both
+		
+----07/07/2013----
+	Wrapper for GA refactor (class GeneticAlgorithm) working
+	Added test for homogenity, will reduce selective pressure as homogenity increases
+	CSV file generation for data plotting complete
+	Produced R script to plot data
+	TODO-TOMORROW:
+		Apply the generated value of homogenity to tweak selective pressure
+		Use generated graphs to empiricaly test changes made - may need to change other parameters esp. mutation rate
+		Find a more complicated optimsation problem
+		Begin testing convergence function
