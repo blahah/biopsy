@@ -1,0 +1,56 @@
+/*visualisation css*/
+body,
+html {
+  width: 1260px;
+  margin: 0;
+  padding: 10px;
+  color: #000;
+  font-family: 'Noticia Text', serif;
+}
+
+h1 {
+  font-family: 'Signika', sans-serif;
+  font-size: 46;
+}
+
+h2 {
+  font-family: 'Signika', sans-serif;
+  font-size: 20;
+}
+
+h3 {
+  font-family: 'Noticia Text', serif;
+  font-size: 16;
+}
+
+#main-panel {
+  p
+}
+
+.datum {
+  font-size: 25;
+  color: forestgreen;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.line {
+  fill: none;
+  stroke: forestgreen;
+  stroke-width: 3.5px;
+  stroke-opacity: 0.1;
+}
+
+.bar {
+  fill: forestgreen;
+  shape-rendering: crispEdges;
+}
+
+.bar text {
+  fill: #fff;
+}
