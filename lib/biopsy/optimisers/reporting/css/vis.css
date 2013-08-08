@@ -8,6 +8,10 @@ html {
   font-family: 'Noticia Text', serif;
 }
 
+.nav {
+  background-color: #222222;
+}
+
 h1 {
   font-family: 'Signika', sans-serif;
   font-size: 46;
@@ -39,7 +43,7 @@ h3 {
   shape-rendering: crispEdges;
 }
 
-.line {
+.run-line {
   fill: none;
   stroke: forestgreen;
   stroke-width: 3.5px;
