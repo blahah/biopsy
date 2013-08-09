@@ -11,25 +11,25 @@ module BiOpSy
 
   class RunHandler
 
-  	# Initialises the RunHandler
-  	# 
-  	# ==== Attributes
-  	# * +constructor+ - A Constructor object which takes as input
-  	#   a hash of parameter settings and returns a command that runs
-  	#   the target program with the settings (see Constructor documentation).
-  	# * +settings+ - Settings object containing the parameter ranges
-  	#   and the input settings and other metadata necessary to run 
-  	#   the experiment (see Settings documentation).
-  	#
-  	# ==== Options
-  	# * +:constructor+ - Constructor (see above)
-  	# * +:settings+ - Settings (see above)
-  	# * +:threads+ - Number of threads to use (as specified by user or default)
-  	# 
-		def initialize(constructor, settings, threads)
+	# Initialises the RunHandler
+	# 
+	# ==== Attributes
+	# * +constructor+ - A Constructor object which takes as input
+	#   a hash of parameter settings and returns a command that runs
+	#   the target program with the settings (see Constructor documentation).
+	# * +settings+ - Settings object containing the parameter ranges
+	#   and the input settings and other metadata necessary to run 
+	#   the experiment (see Settings documentation).
+	#
+	# ==== Options
+	# * +:constructor+ - Constructor (see above)
+	# * +:settings+ - Settings (see above)
+	# * +:threads+ - Number of threads to use (as specified by user or default)
+	# 
+		def initialize(constructor, settings, optimiser=nil, threads=8)
 			@constructor = constructor
 			@settings = settings
-			@optimiser = OptHandler.new(threads)
+			@optimiser = OptHandler.new(optimiser, threads)
 			@objective = ObjectiveHandler.new(threads)
 		end
 
