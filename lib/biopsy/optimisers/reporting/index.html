@@ -5,75 +5,32 @@
 <script src="js/jquery.min.js"></script>
 <script src="js/bootstrap.min.js"></script>
 <link rel="stylesheet" href="css/bootstrap.css">
+<link rel="stylesheet" href="css/vis.css">
 <title>Optimisation visualiser</title>
-<style>
-
-body,
-html {
-  width: 1260px;
-  margin:0;
-  padding:10px;
-  color:#000;
-  font-family: 'Noticia Text', serif;
-}
-
-h1 {
-  font-family: 'Signika', sans-serif;
-  font-size: 46;
-}
-
-h2 {
-  font-family: 'Signika', sans-serif;
-  font-size: 20;
-}
-
-h3 {
-  font-family: 'Noticia Text', serif;
-  font-size: 16;
-}
-
-#main-panel {
-  p
-}
-
-.datum {
-  font-size: 25;
-  color: forestgreen;
-}
-
-.axis path,
-.axis line {
-  fill: none;
-  stroke: #000;
-  shape-rendering: crispEdges;
-}
-
-.line {
-  fill: none;
-  stroke: grey;
-  stroke-width: 3.5px;
-  stroke-opacity: 0.1;
-}
-
-.bar rect {
-  fill: steelblue;
-  shape-rendering: crispEdges;
-}
-
-.bar text {
-  fill: #fff;
-}
-
-</style>
 </head>
-<body>
+<body onload="loadAllData();">
 <div class="navbar">
-  <a class="navbar-brand" href="#">Optimisation Visualiser</a>
-<!--   <ul class="nav navbar-nav">
-    <li class="active"><a href="#">Home</a></li>
-    <li><a href="#">Link</a></li>
-    <li><a href="#">Link</a></li>
-  </ul> -->
+  <a class="navbar-brand" href="#">OptVis</a>
+    <div class="btn-group pull-right" style="margin-left:10px;">
+    <button type="button" class="btn btn-select navbar-btn dropdown-toggle" data-toggle="dropdown">
+      Load objective dataset<span style="margin-left: 10px;" class="caret"></span>
+    </button>
+    <ul class="dropdown-menu">
+      <li><a href="#">n50</a></li>
+      <li><a href="#">longest contig</a></li>
+      <li><a href="#">reads mapped</a></li>
+      <li><a href="#">conditional annotations</a></li>
+    </ul>
+  </div>
+    <div class="btn-group pull-right" style="margin-left:10px;">
+    <button type="button" class="btn btn-default navbar-btn dropdown-toggle" data-toggle="dropdown">
+      Choose optimiser<span style="margin-left: 10px;" class="caret"></span>
+    </button>
+    <ul class="dropdown-menu">
+      <li><a href="#">Tabu Search</a></li>
+      <li><a href="#">Genetic Algorithm</a></li>
+    </ul>
+  </div>
 </div>
 <div class="row">
   <div class="col-lg-9">
@@ -91,263 +48,6 @@ h3 {
         <div class="col-lg-1" id="left">
         </div>
         <div class="col-lg-11" id="main">
-          <script>
-
-          // main plot
-          var margin = {top: 0, right: 20, bottom: 20, left: 40},
-              width = 740 - margin.left - margin.right,
-              height = 400 - margin.top - margin.bottom;
-
-          var x = d3.scale.linear()
-              .range([0, width]);
-
-          var y = d3.scale.linear()
-              .range([height, 0]);
-
-          var xAxis = d3.svg.axis()
-              .scale(x)
-              .orient("bottom")
-
-          var yAxis = d3.svg.axis()
-              .scale(y)
-              .orient("left");
-
-          var mainsvg = d3.select("#main").append("svg")
-              .attr("width", width + margin.left + margin.right)
-              .attr("height", height + margin.top + margin.bottom)
-            .append("g")
-              .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-          // top plot
-          var tmargin = {top: 10, right: 20, bottom: 5, left: 40},
-              twidth = 740 - tmargin.left - tmargin.right,
-              theight = 50 - tmargin.top - tmargin.bottom;
-
-          var ty = d3.scale.linear()
-              .range([theight, 0])
-
-          var tyAxis = d3.svg.axis()
-              .scale(ty)
-              .ticks(2)
-              .orient("left")
-
-          var topsvg = d3.select("#top-main").append("svg")
-              .attr("width", twidth + tmargin.left + tmargin.right)
-              .attr("height", theight + tmargin.top + tmargin.bottom)
-            .append("g")
-              .attr("transform", "translate(" + tmargin.left + "," + tmargin.top + ")");
-
-          // left plot
-          var lmargin = {top: 0, right: 3, bottom: 20, left: 5},
-              lwidth = 70 - lmargin.left - lmargin.right,
-              lheight = 400 - lmargin.top - lmargin.bottom;
-
-          var lx = d3.scale.linear()
-              .range([lwidth, 0]);
-
-          var lxAxis = d3.svg.axis()
-              .scale(lx)
-              .ticks(1)
-              .orient("bottom")
-
-          var leftsvg = d3.select("#left").append("svg")
-              .attr("width", lwidth + lmargin.left + lmargin.right)
-              .attr("height", lheight + lmargin.top + lmargin.bottom)
-            .append("g")
-              .attr("transform", "translate(" + lmargin.left + "," + lmargin.top + ")");
-
-          // generic helpers
-          var colour = d3.scale.category20();
-
-          var round = Math.round;
-
-          // line generator
-          var line = d3.svg.line()
-              .x(function(d) { return x(d.iterid); })
-              .y(function(d) { return y(d.score); });
-
-          // line highlighting
-          var highlighted = null;
-
-          function highlightPath(t) {
-            if (highlighted !== null) {
-              unHighlightPath(highlighted);
-            }
-            t.transition()
-              .duration(50)
-              .style("stroke-opacity", 1.0)
-              .style("stroke", 'steelblue');
-            highlighted = t;
-          }
-
-          function unHighlightPath(t) {
-            t.transition()
-            .duration(50)
-            .style("stroke-opacity", .1)
-            .style("stroke", 'grey');
-          }
-
-          // a formatter for counts.
-          var formatCount = d3.format(",.0f");
-
-          // main data file & plot generation
-          d3.csv("data/n50.csv", function(error, data) {
-
-            var runs = [];
-            var topdata = [];
-
-            data.forEach(function(d) {
-              // ensure numbers are interpreted as numbers
-              d.runid = round(d.runid);
-              d.iterid = round(d.iterid);
-              d.hood_no = round(d.hood_no);
-              d.score = round(d.score);
-
-              runs.push(d.runid);
-            });
-
-            var d2 = {};
-
-            var format = d3.format("d");
-
-            var runname = function(d) {
-              return 'run' + d;
-            }
-
-            runs = d3.keys(d3.set(runs));
-
-            for (i in runs) {
-              d2[runname(runs[i])] = data.filter(function(d) { return d.runid == round(i)+1; });
-            }
-
-            colour.domain(d3.keys(d2));
-
-            runs = colour.domain().map(function(name) {
-              var scores = d2[name].map(function(d) {
-                return round(d.score);
-              });
-              return {
-                name: name,
-                max: d3.max(scores),
-                n: scores.length,
-                levels: scores.filter(function(v,i) { return i==scores.lastIndexOf(v); }).length,
-                values: d2[name].map(function(d) {
-                  return { iterid: round(d.iterid), score: round(d.score) };
-                }),
-                params: d2[name].slice(scores.length - 1).map(function(d) {
-                    topdata.push(d.iterid);
-                    return 'K: ' + d.K + ', M:' + d.M + ', d:' + d.d + ', D:' + d.D + ', e:' + d.e + ', t:' + d.t 
-                })
-              };
-            });
-
-            x.domain(d3.extent(data, function(d) { return round(d.iterid); }));
-            y.domain(d3.extent(data, function(d) { return round(d.score); }));
-
-            // main plot area
-            mainsvg.append("g")
-                .attr("class", "x axis")
-                .attr("transform", "translate(0," + height + ")")
-                .call(xAxis)
-              .append("text")
-                .attr("x", width)
-                .attr("y", -16)
-                .attr("dy", ".71em")
-                .style("text-anchor", "end")
-                .text("No. iterations");
-
-            mainsvg.append("g")
-                .attr("class", "y axis")
-                .call(yAxis)
-              .append("text")
-                .attr("transform", "rotate(-90)")
-                .attr("y", 6)
-                .attr("dy", ".71em")
-                .style("text-anchor", "end")
-                .text("Score");
-
-            var run = mainsvg.selectAll(".run")
-                .data(runs)
-              .enter().append("g")
-                .attr("class", "run");
-
-            run.append("path")
-                .attr("class", "line")
-                .attr("d", function(d) { return line(d.values); })
-                .on('mouseover', function(d) { highlightPath(d3.select(this));
-                  d3.select('#opt').text(d.max);
-                  d3.select('#iter').text(d.n);
-                  d3.select('#levels').text(d.levels);
-                  d3.select('#params').text(d.params);
-                 });
-
-            // generate top plot
-            // Generate a histogram using uniformly-spaced bins.
-            var data = d3.layout.histogram()
-              .bins(x.ticks(35))
-              (topdata);
-
-            ty.domain(d3.extent(data, function(d) { return round(d.y); }));
-
-            var bar = topsvg.selectAll(".bar")
-                .data(data)
-              .enter().append("g")
-                .attr("class", "bar")
-                .attr("transform", function(d) { return "translate(" + x(d.x) + "," + ty(d.y) + ")"; });
-
-            bar.append("rect")
-                .attr("x", 1)
-                .attr("width", x(data[0].dx))
-                .attr("height", function(d) { return theight - ty(d.y); });
-
-            topsvg.append("g")
-                .attr("class", "y axis")
-                .call(tyAxis);
-          });
-
-          // left data file & plot generation
-          d3.csv("data/first_set.csv", function(error, data) {
-            distributions = {
-              'n50': [],
-              'time': [],
-              'largest': [],
-              'brm_paired': [],
-              'rba_result': []
-            };
-
-            data.forEach(function(d) {
-              distributions['n50'].push(d.n50)
-              distributions['time'].push(d.time)
-              distributions['largest'].push(d.largest)
-              distributions['brm_paired'].push(d.brm_paired)
-              distributions['rba_result'].push(d.rba_result)
-            });
-
-            // Generate a histogram using uniformly-spaced bins.
-            var data = d3.layout.histogram()
-              .bins(y.ticks(35))
-              (distributions['n50']);
-
-            lx.domain(d3.extent(data, function(d) { return round(d.y); }));
-
-            var bar = leftsvg.selectAll(".bar")
-                .data(data)
-              .enter().append("g")
-                .attr("class", "bar")
-
-            bar.append("rect")
-                .attr("y", function(d) { return y(d.x) - 10; })
-                .attr("x", function(d) { return lx(d.y); })
-                .attr("width", function(d) { return lwidth - lx(d.y); })
-                .attr("height", data[0].dx);
-
-            leftsvg.append("g")
-              .attr("class", "x axis")
-              .attr("transform", "translate(0," + height + ")")
-              .call(lxAxis);
-          });
-
-          </script>
         </div>
       </div>
     </div>
@@ -390,5 +90,6 @@ h3 {
     </div>
   </div>
 </div>
+<script src="js/vis.js"></script>
 </body>
 </html>
