@@ -1,8 +1,8 @@
 require 'sinatra'
+require 'haml'
 
 get '/optivis' do  
-  puts "you said #{params[:message]}" if params.has_key? :message
-  erb :optivis
+  haml :optivis
 end
 
 post '/run' do  
