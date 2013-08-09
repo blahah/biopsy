@@ -145,7 +145,7 @@ module BiOpSy
 
     attr_reader :current, :best, :hood_no
 
-    def initialize(parameter_ranges, max_hood_size=50, time_limit=nil)
+    def initialize(parameter_ranges, threads=8, limit=nil)
       @ranges = parameter_ranges
       # self.set_term_conditions time_limit
       # solution tracking
