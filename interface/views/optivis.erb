@@ -1,0 +1,95 @@
+<html>
+<head>
+<link href='http://fonts.googleapis.com/css?family=Signika:400,700|Noticia+Text:400,400italic' rel='stylesheet' type='text/css'>
+<script src="js/d3.v3.min.js"></script>
+<script src="js/jquery.min.js"></script>
+<script src="js/bootstrap.min.js"></script>
+<link rel="stylesheet" href="css/bootstrap.css">
+<link rel="stylesheet" href="css/vis.css">
+<title>Optimisation visualiser</title>
+</head>
+<body onload="loadAllData();">
+<div class="navbar">
+  <a class="navbar-brand" href="#">OptVis</a>
+    <div class="btn-group pull-right" style="margin-left:10px;">
+    <button type="button" class="btn btn-select navbar-btn dropdown-toggle" data-toggle="dropdown">
+      Load objective dataset<span style="margin-left: 10px;" class="caret"></span>
+    </button>
+    <ul class="dropdown-menu">
+      <li><a href="#">n50</a></li>
+      <li><a href="#">longest contig</a></li>
+      <li><a href="#">reads mapped</a></li>
+      <li><a href="#">conditional annotations</a></li>
+    </ul>
+  </div>
+    <div class="btn-group pull-right" style="margin-left:10px;">
+    <button type="button" class="btn btn-default navbar-btn dropdown-toggle" data-toggle="dropdown">
+      Choose optimiser<span style="margin-left: 10px;" class="caret"></span>
+    </button>
+    <ul class="dropdown-menu">
+      <li><a href="#">Tabu Search</a></li>
+      <li><a href="#">Genetic Algorithm</a></li>
+    </ul>
+  </div>
+</div>
+<div class="row">
+  <div class="col-lg-9">
+    <div class="panel panel-primary" id="main-panel">
+      <div class="panel-heading">
+        Visualisation area
+      </div>
+      <div class="row">
+        <div class="col-lg-1" id="top-left">
+        </div>
+        <div class="col-lg-11" id="top-main">
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-lg-1" id="left">
+        </div>
+        <div class="col-lg-11" id="main">
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-3">
+    <div class="panel panel-primary">
+      <div class="panel-heading">
+        Data
+      </div>
+      <table class="table table-striped">
+        <tr>
+          <td>
+            <h3>Optimum:</h3>
+          </td>
+          <td class='datum' id='opt'>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <h3>Iterations:</h3>
+          </td>
+          <td class='datum' id='iter'>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <h3>Levels:</h3>
+          </td>
+          <td class='datum' id='levels'>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <h3>Parameters:</h3>
+          </td>
+          <td class='datum' id='params'>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </div>
+</div>
+<script src="js/vis.js"></script>
+</body>
+</html>
