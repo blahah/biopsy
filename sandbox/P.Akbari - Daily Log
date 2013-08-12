@@ -119,3 +119,10 @@ Attempting to hack together the three objective functions and outputdata file, c
 	Analysed plots under various conditions
 
 ----09/08/2013----
+	Ran parameter sweep on GA, plotted results.
+	Mutation Rate has small effect
+	Population size most effective at 25
+	Read papers, found PISA began reading docss
+
+----12/08/2013----
+	Tested SPEA2 algorithm on PISA
