@@ -1,0 +1,28 @@
+Selection for mating
+	Randomly compare two, put best into mating pool
+
+	Algorithm design issues (3.0): 
+		Fitness assignment (3.1)
+		 - Relative to other members of population
+		  - Dominance rank: number of individuals which beat the individual in fitness
+		  - Dominance depth: population divided into several fronts, depth is which front individual belongs to (????)
+		  - Dominance count: number of individuals dominated by certain individual
+		  SPEA2 == dominance rank and count
+		 Multi Objective:
+		 	- Criteron based: obj func used to calculate fitness is switched
+		 	- Probability based (weighted): Randomly pick an objective function (can be user selected)
+
+
+		Diversity preservation (3.2)
+			Selection decreased as density of individuals decreases
+				Kernel Function: Distance to other individuals calculated, average found	
+				SPEA2:
+				Nearest Neighbour: Distance of point to kth nearest neighbour, inverse of distance gives estimator.
+									Estimator added to fitness value (which should be minimised)
+				Histograms: (not used in spea or spea2)
+		Elitism (3.3)
+			Problem of losing good solutions during optimisation due to random effects
+			Solutions:
+				Archive: storage of good solutions
+				-more detail in section 5.2
+
