@@ -126,3 +126,7 @@ Attempting to hack together the three objective functions and outputdata file, c
 
 ----12/08/2013----
 	Tested SPEA2 algorithm on PISA
+
+----13/08/2013----
+	Decided to halt application of PISA
+	Began reading about multiobjective optmisation function SPEA2, notes are being taken for September.
