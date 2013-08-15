@@ -117,23 +117,28 @@ class BadReadMappings < BiOpSy::ObjectiveFunction
                   if ls.chrom == rs.chrom
                     # both on same contig
                     diagnostics[:same_contig] += 1
-                    if Math.sqrt(ls.pos - rs.pos ** 2) < ls.seq.length
-                      # overlap is realistic
-                      diagnostics[:realistic] += 1
-                      if (ls.flag & $flags[6] && ls.flag & $flags[7]) || 
-                       (ls.flag & $flags[5] && ls.flag & $flags[8])
-                        # mates in proper orientation
-                        diagnostics[:proper_orientation]
-                        diagnostics[:good] += 1
+                    begin
+                      if Math.sqrt((ls.pos - rs.pos) ** 2) < ls.seq.length
+                        # overlap is realistic
+                        diagnostics[:realistic] += 1
+                        if (ls.flag & $flags[6] && ls.flag & $flags[7]) || 
+                         (ls.flag & $flags[5] && ls.flag & $flags[8])
+                          # mates in proper orientation
+                          diagnostics[:proper_orientation]
+                          diagnostics[:good] += 1
+                        else
+                          # mates in wrong orientation
+                          diagnostics[:improper_orientation]
+                          diagnostics[:bad] += 1
+                        end
                       else
-                        # mates in wrong orientation
-                        diagnostics[:improper_orientation]
+                        # overlap not realistic
+                        diagnostics[:unrealistic] += 1
                         diagnostics[:bad] += 1
                       end
-                    else
-                      # overlap not realistic
-                      diagnostics[:unrealistic] += 1
-                      diagnostics[:bad] += 1
+                    rescue
+                      puts ls.pos
+                      puts rs.pos
                     end
                   else
                     # mates on different contigs
