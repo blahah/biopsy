@@ -1,8 +1,6 @@
 biopsy
 ==========
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 An automatic optimisation framework for programs and pipelines.
 
 This project is in pre-alpha development as is not yet ready for deployment. Please don't report issues until we are ready for alpha release (planned for late September 2013).
@@ -18,14 +16,3 @@ This project is in pre-alpha development as is not yet ready for deployment. Ple
 [gemnasium]: https://gemnasium.com/Blahah/biopsy
 [codeclimate]: https://codeclimate.com/github/Blahah/biopsy
 [coveralls]: https://coveralls.io/r/Blahah/biopsy
-
-=======
-An automatic optimisation framework for bioinformatics.
-
-This project is in pre-alpha development as is not yet ready for deployment. Please don't report issues until we are ready for alpha release.
->>>>>>> ff1e44b6b099c8b8308553cf34499b4e12be183b
-=======
-An automatic optimisation framework for bioinformatics.
-
-This project is in pre-alpha development as is not yet ready for deployment. Please don't report issues until we are ready for alpha release.
->>>>>>> ff1e44b6b099c8b8308553cf34499b4e12be183b
