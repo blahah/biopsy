@@ -211,12 +211,7 @@ module BiOpSy
       # probabilities
       @distributions = {}
       @current.each_pair do |param, value|
-        mean = @ranges[param].index(value)
-        range = @ranges[param]
-        @distributions[param] = BiOpSy::Distribution.new(mean, 
-                                                        range,
-                                                        @sd_increment_proportion,
-                                                        @starting_sd_divisor)
+        self.update_distribution(param, value)
       end
     end
 
@@ -224,13 +219,19 @@ module BiOpSy
     # distributions according to total performance of each parameter
     def update_neighbourhood_structure
       self.backtrack_or_continue()[:parameters].each_pair do |param, value|
-        mean = @ranges[param].index(value)
-        range = @ranges[param]
-        @distributions[param] = BiOpSy::Distribution.new(mean, 
-                                                        range,
-                                                        @sd_increment_proportion,
-                                                        @starting_sd_divisor)
+        self.update_distribution(param, value)
       end
+    end
+
+    # set the distribution for a parameter to a new one centered
+    # around the index of +value+
+    def update_distribution(param, value)
+      mean = @ranges[param].index(value)
+      range = @ranges[param]
+      @distributions[param] = BiOpSy::Distribution.new(mean, 
+                                                      range,
+                                                      @sd_increment_proportion,
+                                                      @starting_sd_divisor)
     end
 
     # return the correct 'best' location to form a new neighbourhood around
