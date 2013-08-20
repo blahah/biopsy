@@ -25,8 +25,8 @@
 #
 module BiOpSy
 
-  class ObjectiveHandler
+  class OptHandler
 
-  end # end of class ObjectiveHandler
+  end # end of class OptHandler
 
 end # end of module BiOpSy
