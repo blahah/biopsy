@@ -1,14 +1,12 @@
-= biopsy - DESCRIBE YOUR GEM
+= biopsy - the pipeline optimisation system
 
-Author::  YOUR NAME (YOUR EMAIL)
-Copyright:: Copyright (c) 2013 YOUR NAME
+Author::  Richard Smith (rds45@cam.ac.uk)
+Copyright:: Copyright (c) 2013 Richard Smith
 
 
 License:: mit, see LICENSE.txt
 
-
-
-DESCRIBE YOUR GEM HERE
+DESCRIPTION HERE
 
 == Links
 

@@ -1,0 +1,53 @@
+Report 3
+========================================================
+
+Tabu Search was implemented for the bioinformatic optimisation system. The Parameter Sweeper module was used to discover the optimal parameters for the Tabu Search algorithm.
+
+```{r fig.width=10, fig.height=10, echo=FALSE, comment=FALSE, warning=FALSE, message=FALSE}
+library(ggplot2)
+library(plyr)
+library(gridExtra)
+
+analyseObjective <- function(objective) {
+  nopt <- read.csv(paste(objective, '_opt_iter.csv', sep=''), as.is=T, head=T)
+  names(nopt) <-c('hood_size', 'sd_divisor', 'inc_prop', 'bt_cutoff', 'optiter')
+  vardata <- ddply(nopt, c('hood_size', 'sd_divisor', 'inc_prop', 'bt_cutoff'), function(df)
+    return(c(mean=mean(df$optiter), sd=sd(df$optiter))))
+  
+  p1 <- ggplot(vardata, aes(factor(hood_size), mean)) + geom_boxplot() + xlab('hood size') + ylab('iterations until optimum') + theme_bw()
+  p2 <- ggplot(vardata, aes(factor(sd_divisor), mean)) + geom_boxplot() + xlab('initial sd divisor') + ylab('iterations until optimum') + theme_bw()
+  p3 <- ggplot(vardata, aes(factor(inc_prop), mean)) + geom_boxplot() + xlab('increment proportion') + ylab('iterations until optimum') + theme_bw()
+  p4 <- ggplot(vardata, aes(factor(bt_cutoff), mean)) + geom_boxplot() + xlab('backtrack cutoff') + ylab('iterations until optimum') + theme_bw()
+  
+  grid.arrange(p1, p2, p3, p4, ncol=2)
+  
+  p5 <- ggplot(vardata, aes(jitter(hood_size), mean, colour=factor(sd_divisor))) + 
+    geom_point(size=4) + 
+    theme_bw() +
+    labs(x='hood size', y='mean number of iterations to optimum', colour='   initial\nSD divisor\n') +
+    ggtitle('Effect of hood size and initial SD divisor on mean number of iterations to optimum')
+  print(p5)
+  print(summary(aov(optiter ~ hood_size * sd_divisor * inc_prop * bt_cutoff, data=nopt)))
+  print(vardata[which(vardata$mean == min(vardata$mean)),])
+}
+```
+
+The algorithm was optimised separately for different objectives on the SOAPdt dataset.
+
+## N50
+
+```{r fig.width=10, fig.height=10}
+analyseObjective('n50')
+```
+
+## Length of largest contig
+
+```{r fig.width=10, fig.height=10}
+analyseObjective('largest')
+```
+
+## Read pairs mapping
+
+```{r fig.width=10, fig.height=10}
+analyseObjective('brm_paired')
+```
