@@ -54,6 +54,13 @@ class TestSettings < Test::Unit::TestCase
       assert @settings.optimiser_dir == @data[:optimiser_dir], 'domain key not loaded as method'
     end
 
+    should "allow adding a new setting" do
+      test_value = 'this is a test string'
+      @settings.fake_entry = test_value
+      assert_equal test_value, @settings.fake_entry
+      @settings.clear
+    end
+
     should "give a purdy string representation" do
       assert_equal @settings.to_s, pp(@data)
     end

@@ -9,7 +9,7 @@
 # Key settings include the location(s) of config file(s), the Domain that
 # is currently active, the directories to search for objective functions
 #
-# Methods are provided for loading, listing and accessing the settings values
+# Methods are provided for loading, listing, accessing and saving the settings
 #
 module Biopsy
 
@@ -23,7 +23,7 @@ module Biopsy
     attr_reader :_settings
 
     def initialize
-      @_settings = {}
+      self.clear
       @config_file = '~/.biopsyrc'
     end
 
@@ -36,12 +36,17 @@ module Biopsy
     def save(config_file=@config_file)
       ::File.open(config_file, 'w') do |f|
         f.puts @_settings.to_yaml
-        puts @_settings.to_yaml
       end
     end
 
     def method_missing(name, *args, &block)
-      @_settings[name.to_sym] || super
+      if args.empty?
+        # access the value
+        @_settings[name.to_sym] || super
+      elsif name.to_s[-1] == '='
+        # assign the value
+        @_settings[name.to_s[0..-2].to_sym] = args[0]
+      end
     end
 
     def respond_to_missing?(name, include_private = false)
@@ -56,6 +61,9 @@ module Biopsy
       pp @_settings
     end
 
+    def clear
+      @_settings = {}
+    end
   end # end of class Settings
 
 end # end of module Biopsy
