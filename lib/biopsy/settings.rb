@@ -14,7 +14,7 @@
 module Biopsy
 
   require 'singleton'
-  require 'YAML'
+  require 'yaml'
   require 'pp'
 
   class Settings
