@@ -1,5 +1,4 @@
 require 'rubystats'
-require 'methadone'
 require 'set'
 require 'pp'
 
@@ -10,14 +9,12 @@ require 'pp'
 # - plot SD and step-size over time
 # - capture data about convergence (done for toy data, need to repeat for other data)
 
-module BiOpSy
+module Biopsy
 
   # a Distribution represents the probability distribution from
   # which the next value of a parameter is drawn. The set of all
   # distributions acts as a probabilistic neighbourhood structure.
   class Distribution
-
-    include Methadone::CLILogging
 
     # create a new Distribution
     def initialize(mean, range, sd_increment_proportion, starting_sd_divisor)
@@ -70,8 +67,6 @@ module BiOpSy
   # the set of Distributions, which together define the neighbourhood
   # structure.
   class Hood
-
-    include Methadone::CLILogging
 
     attr_reader :best
 
@@ -144,8 +139,6 @@ module BiOpSy
   # space with costly objective evaluation.
   class TabuSearch #< OptmisationAlgorithm
 
-    include Methadone::CLILogging
-
     attr_reader :current, :best, :hood_no
     attr_writer :max_hood_size, :sd_increment_proportion, :starting_sd_divisor, :backtrack_cutoff
 
@@ -167,7 +160,7 @@ module BiOpSy
       @starting_sd_divisor = 30
       @sd_increment_proportion = 0.1
       self.define_neighbourhood_structure
-      @current_hood = BiOpSy::Hood.new(@distributions, @max_hood_size, @tabu)
+      @current_hood = Biopsy::Hood.new(@distributions, @max_hood_size, @tabu)
       @hood_no = 1
 
       # backtracking
@@ -228,7 +221,7 @@ module BiOpSy
     def update_distribution(param, value)
       mean = @ranges[param].index(value)
       range = @ranges[param]
-      @distributions[param] = BiOpSy::Distribution.new(mean, 
+      @distributions[param] = Biopsy::Distribution.new(mean, 
                                                       range,
                                                       @sd_increment_proportion,
                                                       @starting_sd_divisor)
@@ -285,4 +278,4 @@ module BiOpSy
 
   end # TabuSearch
 
-end # BiOpSy
+end # Biopsy

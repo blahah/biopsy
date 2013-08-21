@@ -1,6 +1,5 @@
 require 'securerandom'
 require 'fileutils'
-require 'methadone'
 
 
 # extend String to implement camelize from Rails
@@ -39,10 +38,8 @@ end
 # The Handler iterates through the objectives, calling the *run()* method
 # of each by passing the assembly. After collecting results, it returns
 # a Hash of the results to the parent Optimiser.
-module BiOpSy
+module Biopsy
   class ObjectiveHandler
-
-    include Methadone::CLILogging
 
     attr_reader :last_tempdir
 

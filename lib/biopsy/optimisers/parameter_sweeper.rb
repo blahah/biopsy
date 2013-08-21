@@ -16,7 +16,7 @@ require 'csv'
 require 'threach'
 require 'logger'
 
-module BiOpSy
+module Biopsy
   # options - is a hash of two hashes, :settings and :parameters
   #   :ranges are arrays to be parameter sweeped 
   #     ---(single values may be present, these are also remain unchanged but are accessible within the parameters hash to the constructor)

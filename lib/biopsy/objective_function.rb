@@ -1,4 +1,3 @@
-require 'methadone'
 
 
 # Assembly Optimisation Framework: Objective Function
@@ -11,11 +10,10 @@ require 'methadone'
 # Ruby's runtime compilation, we can only check if methods
 # are implemented at runtime (but at least we can raise
 # a sensible error)
-module BiOpSy
+module Biopsy
 
   class ObjectiveFunction
 
-    include Methadone::CLILogging
     # Runs the objective function for the assembly supplied,
       # returning a real number value
       #
@@ -28,7 +26,7 @@ module BiOpSy
       # objective = ObjectiveFunction.new
       # result = objective.run('example.fasta')
     def run(assemblydata)
-      raise NotImplementedError.new("You must implement this")
+      raise NotImplementedError.new("You must implement a run method for each objective function")
     end
 
     def essential_files

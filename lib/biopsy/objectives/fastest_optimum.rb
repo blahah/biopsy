@@ -1,9 +1,7 @@
 # objective function to count number of conditioned
 # reciprocal best usearch annotations
 
-require 'objectivefunction.rb'
-
-class FastestOptimum < BiOpSy::ObjectiveFunction
+class FastestOptimum < Biopsy::ObjectiveFunction
 
   def run(optdata, threads=6)
     info "running objective: FastestOptimum"
