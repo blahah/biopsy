@@ -2,7 +2,7 @@ require 'helper'
 
 class TestSettings < Test::Unit::TestCase
 
-  context "the Settings object" do
+  context "Settings" do
 
     setup do
       @data = {
@@ -61,8 +61,8 @@ class TestSettings < Test::Unit::TestCase
       @settings.clear
     end
 
-    should "give a purdy string representation" do
-      assert_equal @settings.to_s, pp(@data)
+    should "produce a YAML string representation" do
+      assert_equal @settings.to_s, @data.to_yaml
     end
 
     should "produce a flattened list of settings" do

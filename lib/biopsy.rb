@@ -2,6 +2,7 @@ require "biopsy/version"
 require "biopsy/settings"
 require "biopsy/domain"
 require "biopsy/experiment"
+require "biopsy/target"
 require "biopsy/objective_handler"
 require "biopsy/objective_function"
 require "biopsy/opt_algorithm"
@@ -14,16 +15,15 @@ module Biopsy
 
   class File
 
-    # extend the File class to add File::which method.
-    # returns the full path to the supplied cmd,
+    # return the full path to the supplied cmd executable,
     # if it exists in any location in PATH
     def self.which(cmd)
       exts = ENV['PATHEXT'] ? ENV['PATHEXT'].split(';') : ['']
       ENV['PATH'].split(File::PATH_SEPARATOR).each do |path|
-        exts.each { |ext|
+        exts.each do |ext|
           exe = File.join(path, "#{cmd}#{ext}")
           return exe if File.executable? exe
-        }
+        end
       end
       return nil
     end
@@ -34,6 +34,7 @@ end # Biopsy
 
 class Hash
 
+  # recursively convert all keys to symbols
   def deep_symbolize
     target = dup    
     target.inject({}) do |memo, (key, value)|
@@ -43,6 +44,7 @@ class Hash
     end
   end
   
+  # recursively merge two hashes
   def deep_merge(other_hash)
     self.merge(other_hash) do |key, oldval, newval|
       oldval = oldval.to_hash if oldval.respond_to?(:to_hash)

@@ -12,5 +12,5 @@ begin; require 'turn/autorun'; rescue LoadError; end
 require 'shoulda-context'
 require 'biopsy'
 
-Turn.config.format = :progress
-Turn.config.trace = 2
+Turn.config.format = :pretty
+Turn.config.trace = 1
