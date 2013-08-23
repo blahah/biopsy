@@ -31,7 +31,7 @@ This project is in pre-alpha development as is not yet ready for deployment. Ple
 | OptAlgorithm     | -                  | -       | -      |
 
 
-~ 10/24 tasks completed, ~42% done overall
 
-planned alpha release date: 30th August 2013
-planned beta release data: 6th September 2013
+* ~ 10/24 tasks completed, ~42% done overall
+* planned alpha release date: 30th August 2013
+* planned beta release data: 6th September 2013
