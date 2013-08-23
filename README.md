@@ -16,3 +16,22 @@ This project is in pre-alpha development as is not yet ready for deployment. Ple
 [gemnasium]: https://gemnasium.com/Blahah/biopsy
 [codeclimate]: https://codeclimate.com/github/Blahah/biopsy
 [coveralls]: https://coveralls.io/r/Blahah/biopsy
+
+### Roadmap
+
+| Class            | Code               | Tests   | Docs   |
+| ------------     | :-------------:    | ------: | -----: |
+| Settings         | DONE               | DONE    | DONE   |
+| Target           | DONE               | DONE    | DONE   |
+| Domain           | -                  | -       | -      |
+| Experiment       | ~50%               | -       | -      |
+| TabuSearch       | DONE               | -       | -      |
+| ParameterSweeper | DONE               | -       | -      |
+| ObjectiveHandler | needs generalising | -       | -      |
+| OptAlgorithm     | -                  | -       | -      |
+
+
+~ 10/24 tasks completed, ~42% done overall
+
+planned alpha release date: 30th August 2013
+planned beta release data: 6th September 2013
