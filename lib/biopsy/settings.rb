@@ -7,7 +7,7 @@
 # object).
 #
 # Key settings include the location(s) of config file(s), the Domain that
-# is currently active, the directories to search for objective functions
+# is currently active, and the directories to search for objective functions.
 #
 # Methods are provided for loading, listing, accessing and saving the settings
 #
