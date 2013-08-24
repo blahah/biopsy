@@ -3,7 +3,8 @@ biopsy
 
 An automatic optimisation framework for programs and pipelines.
 
-This project is in pre-alpha development as is not yet ready for deployment. Please don't report issues until we are ready for alpha release (planned for late September 2013).
+This project is in pre-alpha development as is not yet ready for deployment. 
+Please don't report issues until we are ready for alpha release (see below for estimated timeframe).
 
 [![Gem Version](https://badge.fury.io/rb/biopsy.png)][gem]
 [![Build Status](https://secure.travis-ci.org/Blahah/biopsy.png?branch=master)][travis]
