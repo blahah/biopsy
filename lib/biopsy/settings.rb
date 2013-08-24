@@ -2,9 +2,9 @@
 #
 # == Description
 #
-# The Settings singleton object maintains general settings (as opposed to)
+# The Settings singleton object maintains general settings (as opposed to
 # those specific to the experiment, which are contained in the Experiment
-# object.
+# object).
 #
 # Key settings include the location(s) of config file(s), the Domain that
 # is currently active, the directories to search for objective functions
