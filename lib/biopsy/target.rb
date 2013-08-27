@@ -61,20 +61,20 @@ module Biopsy
     # Store the values in +:config+
     def store_config config
       config.each_pair do |key, value|
-        if self.instance_variable_defined? '@' + key.to_s
-          self.instance_variable_set('@' + key.to_s, value)
-        end
+        self.instance_variable_set('@' + key.to_s, value)
       end
     end
 
     # Validate the constructor. True if valid, false otherwise.
     def check_constructor
+      raise "constructor path is not defined for this target" if @constructor_path.nil?
       self.valid_ruby? @constructor_path
     end
 
     # true if file is valid ruby
     def valid_ruby? file
-      result = `ruby -c #{file}`
+      return false unless ::File.exists? file
+      result = `ruby -c #{file} &> /dev/null`
       !result.size.zero?
     end
 

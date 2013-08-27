@@ -15,7 +15,7 @@ class TestTarget < Test::Unit::TestCase
           :a => [1, 2, 3, 4],
           :b => [4, 6, 3, 2]
         },
-        :constructor_path => 'test_con.yml'
+        :constructor_path => 'test_con.rb'
       }
       @config_path = File.expand_path('test_target.yml')
       File.open(@config_path, 'w') do |f|
@@ -29,7 +29,7 @@ class TestTarget < Test::Unit::TestCase
       @fullpath = File.expand_path('.tmp')
       @settings.target_dir = ['.', @fullpath]
 
-      # and a dir for domain config
+      # we need a valid domain too
       @settings.domain = 'test_domain'
       @settings.domain_dir = [@fullpath]
       @domaindata = {
@@ -108,9 +108,22 @@ class TestTarget < Test::Unit::TestCase
     should "be able to store a loaded config file" do
       config = YAML::load_file(@config_path).deep_symbolize
       @target.store_config config
-      @data.keys.each do |key, value|
-        assert_equal @target.instance_variable_get('@' + key.to_s), value
+      @data.each_pair do |key, value|
+        assert_equal value, @target.instance_variable_get('@' + key.to_s)
       end
+    end
+
+    should "recognise a malformed or missing constructor" do
+      config = YAML::load_file(@config_path).deep_symbolize
+      @target.store_config config
+
+      assert !@target.check_constructor, "missing constructor is invalid"
+
+      File.open(@data[:constructor_path], 'w') do |f|
+        f.puts '[x**2 for x in range(10)]' # python :)
+      end
+      assert !@target.check_constructor, "invalid ruby is invalid"
+      File.delete @data[:constructor_path]
     end
 
   end # Target context
