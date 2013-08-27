@@ -18,10 +18,6 @@ module Biopsy
   require 'pp'
 
   class SettingsError < StandardError
-   attr_reader :reason
-     def initialize(reason)
-        @reason = reason
-     end
   end
 
   class Settings
@@ -87,6 +83,29 @@ module Biopsy
     # empties the settings
     def clear
       @_settings = {}
+    end
+
+    # Locate the first YAML config file in dirs listed
+    # by the +:dir_key+ setting. If +:name: is provided,
+    # return the first file whose name excluding extension
+    # matches +:name+ (case insensitive).
+    def locate_config(dir_key, name=nil)
+      unless @_settings.has_key? dir_key
+        raise SettingsError.new "no setting found for compulsory key #{dir_key}"
+      end
+      @_settings[dir_key].each do |dir|
+        Dir.chdir ::File.expand_path(dir) do
+          Dir[name + '.yml'].each do |file|
+            if name
+              return ::File.expand_path(file) if ::File.basename(file, '.yml').downcase == name.downcase
+            else
+              return ::File.expand_path file
+            end
+          end
+        end
+      end
+
+      nil
     end
 
   end # Settings
