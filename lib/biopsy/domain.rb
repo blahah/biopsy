@@ -54,6 +54,44 @@ module Biopsy
       valid
     end
 
+    # Write out a template Domain definition to +:filename+
+    def write_template filename
+      data = {
+        :input_filetypes => [
+          {
+            :min => 1,
+            :max => 2,
+            :allowed_extensions => [
+              'txt',
+              'csv',
+              'tsv'
+            ]
+          },
+          {
+            :n => 2,
+            :allowed_extensions => [
+              'png'
+            ]
+          }
+        ],
+        :output_filetypes => [
+          {
+            :n => 1,
+            :allowed_extensions => [
+              'pdf',
+              'xls'
+            ]
+          }
+        ],
+        :objectives => [
+          'objective1', 'objective2'
+        ]
+      }
+      File.open(filename, 'w') do |f|
+        f.puts data.to_yaml
+      end
+    end
+
   end # end of class Domain
 
 end # end of module Biopsy
