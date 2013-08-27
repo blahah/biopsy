@@ -40,15 +40,7 @@ module Biopsy
     # to the definition YAML file. All +:target_dir+s defined in Settings are
     # searched and the first matching YAML file is loaded. 
     def locate_definition name
-      Settings.instance.target_dir.each do |dir|
-        Dir.chdir dir do
-          Dir[name + '.yml'].each do |file|
-            return ::File.expand_path file
-          end
-        end
-      end
-
-      nil
+      Settings.instance.locate_config(:target_dir, name)
     end
 
     # verify that +:config+ contains values for all essential target settings
@@ -66,7 +58,7 @@ module Biopsy
       missing
     end
 
-
+    # Store the values in +:config+
     def store_config config
       config.each_pair do |key, value|
         if self.instance_variable_defined? '@' + key.to_s
@@ -75,6 +67,7 @@ module Biopsy
       end
     end
 
+    # Validate the constructor. True if valid, false otherwise.
     def check_constructor
       self.valid_ruby? @constructor_path
     end

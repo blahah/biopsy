@@ -23,13 +23,50 @@ class TestTarget < Test::Unit::TestCase
       end
 
       @settings = Biopsy::Settings.instance
-      domain = Biopsy::Domain.new
-      @target = Biopsy::Target.new domain
 
       # a spare dir for test-specific config files
       Dir.mkdir('.tmp')
       @fullpath = File.expand_path('.tmp')
       @settings.target_dir = ['.', @fullpath]
+
+      # and a dir for domain config
+      @settings.domain = 'test_domain'
+      @settings.domain_dir = [@fullpath]
+      @domaindata = {
+        :input_filetypes => [
+          {
+            :min => 1,
+            :max => 2,
+            :allowed_extensions => [
+              'fastq',
+              'fq',
+              'fasta',
+              'fa',
+              'fas'
+            ]
+          }
+        ],
+        :output_filetypes => [
+          {
+            :n => 1,
+            :allowed_extensions => [
+              'fasta',
+              'fa',
+              'fas'
+            ]
+          }
+        ],
+        :objectives => [
+          'test1', 'test2'
+        ]
+      }
+      @domainpath = File.join(@fullpath, @settings.domain + '.yml')
+      File.open(@domainpath, 'w') do |f|
+        f.puts @domaindata.to_yaml
+      end
+
+      domain = Biopsy::Domain.new
+      @target = Biopsy::Target.new domain
     end
 
     teardown do
