@@ -85,22 +85,17 @@ module Biopsy
       @_settings = {}
     end
 
-    # Locate the first YAML config file in dirs listed
-    # by the +:dir_key+ setting. If +:name: is provided,
-    # return the first file whose name excluding extension
-    # matches +:name+ (case insensitive).
-    def locate_config(dir_key, name=nil)
+    # Locate the first YAML config file whose name
+    # excluding extension matches +:name+ (case insensitive)
+    # in dirs listed by the +:dir_key+ setting.
+    def locate_config(dir_key, name)
       unless @_settings.has_key? dir_key
         raise SettingsError.new "no setting found for compulsory key #{dir_key}"
       end
       @_settings[dir_key].each do |dir|
         Dir.chdir ::File.expand_path(dir) do
           Dir[name + '.yml'].each do |file|
-            if name
-              return ::File.expand_path(file) if ::File.basename(file, '.yml').downcase == name.downcase
-            else
-              return ::File.expand_path file
-            end
+            return ::File.expand_path(file) if ::File.basename(file, '.yml').downcase == name.downcase
           end
         end
       end

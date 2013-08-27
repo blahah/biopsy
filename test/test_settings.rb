@@ -69,6 +69,20 @@ class TestSettings < Test::Unit::TestCase
       assert_equal @settings.list_settings, @data.flatten
     end
 
+    should "error when a non-existent config is requested" do
+      assert_raise Biopsy::SettingsError do
+        @settings.locate_config :fake_key, 'blah'
+      end
+    end
+
+    should "pass non-setting methods to super" do
+      assert_raise NoMethodError do
+        @settings.fake_method_name
+      end
+
+      assert !@settings.respond_to_missing?('fakename')
+    end
+
   end # RunHandler context
 
 end # TestRunHandler
