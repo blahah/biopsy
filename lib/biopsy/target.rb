@@ -8,14 +8,15 @@ module Biopsy
     require 'ostruct'
 
     # array of input files expected by the target constructor
-    attr_reader :input_files
+    attr_accessor :input_files
     # array of output files to keep for submission to objective
     # functions during optimisation
-    attr_reader :output_files
+    attr_accessor :output_files
     # hash mapping parameters to the ranges of values they can take
     attr_reader :parameter_ranges
     # path to the constructor code
     attr_reader :constructor_path
+    attr_reader :domain
 
     # create a new Target instance.
     # arguments:
@@ -32,8 +33,13 @@ module Biopsy
       if missing
         raise TargetLoadError.new("The target definition at #{@config_path} is missing required fields: #{missing}")
       end
+      errors = self.validate_config config
+      unless errors.empty?
+        raise TargetLoadError.new("The target definition at #{@config_path} contains the following errors:\n#{errors.join("\n")}")
+      end
       self.check_constructor
       self.store_config
+      raise TargetLoadError.new("Target was not valid according to the domain definition") unless @domain.target_valid?
     end
 
     # given the name of a target, return the path
@@ -56,6 +62,14 @@ module Biopsy
         end
       end
       missing
+    end
+
+    # validate the config against the domain definition. Return an array
+    # whose length will be the number of errors found. Thus an array of
+    # length 0 indicates that the config is valid according to the domain
+    # specification.
+    def validate_config config
+      @domain.target_valid? config
     end
 
     # Store the values in +:config+

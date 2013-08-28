@@ -105,6 +105,12 @@ class TestTarget < Test::Unit::TestCase
       end
     end
 
+    should "reject a config that doesn't match the domain spec" do
+      @target.store_config @data
+      @target.input_files << 'another.file'
+      assert @target.domain.target_valid?(@target).length > 0
+    end
+
     should "be able to store a loaded config file" do
       config = YAML::load_file(@config_path).deep_symbolize
       @target.store_config config

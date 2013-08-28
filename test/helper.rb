@@ -13,4 +13,4 @@ require 'shoulda-context'
 require 'biopsy'
 
 Turn.config.format = :pretty
-Turn.config.trace = 1
+Turn.config.trace = 2

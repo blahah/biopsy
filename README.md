@@ -24,7 +24,7 @@ Please don't report issues until we are ready for alpha release (see below for e
 | ------------     | :-------------:    | ------: | -----: |
 | Settings         | DONE               | DONE    | DONE   |
 | Target           | DONE               | DONE    | DONE   |
-| Domain           | -                  | -       | -      |
+| Domain           | DONE               | DONE    | -      |
 | Experiment       | ~50%               | -       | -      |
 | TabuSearch       | DONE               | -       | -      |
 | ParameterSweeper | DONE               | -       | -      |
@@ -33,6 +33,6 @@ Please don't report issues until we are ready for alpha release (see below for e
 
 
 
-* ~ 10/24 tasks completed, ~42% done overall
+* ~ 11/24 tasks completed, ~42% done overall
 * planned alpha release date: 30th August 2013
 * planned beta release data: 6th September 2013
