@@ -27,19 +27,21 @@ module Biopsy
 
     # load target with +name+.
     def load_by_name name
-      @config_path = self.locate_definition name
-      config = YAML::load_file(@config_path).deep_symbolize
-      missing = self.check_config config
+      path = self.locate_definition name
+      raise TargetLoadError.new("Target definition file does not exist for #{name}") if path.nil?
+      config = YAML::load_file(path)
+      raise TargetLoadError.new("Target definition file #{path} is not valid YAML") if config.nil?
+      missing = self.check_config config.deep_symbolize
       if missing
-        raise TargetLoadError.new("The target definition at #{@config_path} is missing required fields: #{missing}")
+        msg = "Target definition file #{path} is missing required fields: #{missing}"
+        raise TargetLoadError.new(msg)
       end
       errors = self.validate_config config
       unless errors.empty?
-        raise TargetLoadError.new("The target definition at #{@config_path} contains the following errors:\n#{errors.join("\n")}")
+        raise TargetLoadError.new("Target definition file #{path} contains the following errors:\n - #{errors.join("\n - ")}")
       end
+      self.store_config config
       self.check_constructor
-      self.store_config
-      raise TargetLoadError.new("Target was not valid according to the domain definition") unless @domain.target_valid?
     end
 
     # given the name of a target, return the path

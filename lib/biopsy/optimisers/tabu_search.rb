@@ -276,6 +276,11 @@ module Biopsy
       false
     end
 
+    # True if this algorithm chooses its own starting point
+    def knows_starting_point?
+      false
+    end
+
   end # TabuSearch
 
 end # Biopsy

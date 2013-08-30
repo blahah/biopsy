@@ -15,8 +15,10 @@ module Biopsy
     require 'yaml'
     require 'pp'
 
+    # Return a new Domain object containing the specification of the
+    # currently active domain.
     def initialize domain=nil
-      @name = self.get_current_domain if domain.nil?
+      @name = domain.nil? ? self.get_current_domain : domain
       self.load_by_name @name
     end
 
@@ -44,9 +46,11 @@ module Biopsy
 
     # Load and apply the domain definition with +:name+
     def load_by_name name
-      path = self.locate_definition(name)
-      config = YAML::load_file(path).deep_symbolize
-      self.apply_config config
+      path = self.locate_definition name
+      raise DomainLoadError.new("Domain definition file does not exist for #{name}") if path.nil?
+      config = YAML::load_file(path)
+      raise DomainLoadError.new("Domain definition file #{path} is not valid YAML") if config.nil?
+      self.apply_config config.deep_symbolize
     end
 
     # Validate a Target, returning true if the target meets
@@ -55,15 +59,15 @@ module Biopsy
     def target_valid? target
       l = []
       @input_filetypes.each do |input|
-        l << [target.input_files, input]
+        l << [target[:input_files], input]
       end
       @output_filetypes.each do |output|
-        l << [target.output_files, output]
+        l << [target[:output_files], output]
       end
       errors = []
       l.each do |pair|
         testcase, definition = pair
-        errors << self.validate_target_filetypes(testcase, definition)
+        errors += self.validate_target_filetypes(testcase, definition)
       end
       errors
     end

@@ -1,15 +1,6 @@
 require 'securerandom'
 require 'fileutils'
 
-
-# extend String to implement camelize from Rails
-class String
-  def camelize
-    return self if self !~ /_/ && self =~ /[A-Z]+.*/
-    split('_').map{|e| e.capitalize}.join
-  end
-end
-
 # Assembly Optimisation Framework: Objective Function Handler
 #
 # == Description
@@ -39,16 +30,21 @@ end
 # of each by passing the assembly. After collecting results, it returns
 # a Hash of the results to the parent Optimiser.
 module Biopsy
+
+  class ObjectiveHandlerError < Exception
+  end
+
   class ObjectiveHandler
 
     attr_reader :last_tempdir
 
-    def initialize(objectives_dir='objectives', subset=nil)
-      base_dir = File.expand_path(File.dirname(__FILE__))
+    def initialize domain, target
+      @domain = domain
+      base_dir = Settings.instance.base_dir
       $LOAD_PATH.unshift(base_dir)
-      @objectives_dir = File.join(base_dir, objectives_dir)
+      @objectives_dir = File.join(base_dir, Settings.instance.objectives_dir)
       @objectives = {}
-      @subset = subset
+      @subset = Settings.instance.objectives_subset
       self.load_objectives
       # pass objective list back to caller
       return @objectives.keys
@@ -76,13 +72,13 @@ module Biopsy
       end
     end
 
-    def run_objective(objective, name, assembly, threads)
-      # run objective for assembly
+    # Run a specific +:objective+ on the +:output+ of a target
+    # with max +:threads+.
+    def run_objective(objective, name, output, threads)
       begin
-        # assembly is a hash containing:
-        # - :assembly (path to assembly .fasta)
-        # - :leftreads (path to assembly left reads)
-        # - :rightreads (path to assembly right reads)
+        # output is a hash containing the file(s) output
+        # by the target in the format expected by the
+        # objective function(s).
         return objective.run(assembly, threads)
       rescue NotImplementedError => e
         puts "Error: objective function #{name} does not implement the run() method"
@@ -91,6 +87,8 @@ module Biopsy
       end
     end
 
+    # Perform a euclidean distance dimension reduction of multiple objectives
+    # using weighting specified in the domain definition.
     def dimension_reduce(results)
       # calculate the weighted Euclidean distance from optimal
       # d(p, q) = \sqrt{(p_1 - q_1)^2 + (p_2 - q_2)^2+...+(p_i - q_i)^2+...+(p_n - q_n)^2}
@@ -106,13 +104,14 @@ module Biopsy
       return Math.sqrt(total) / results.length
     end
 
-    def run_for_assembly(assembly, threads=6, cleanup=0, allresults=false)
-      # check assembly exists
-      unless File.exists?(assembly[:assembly]) && `wc -l #{assembly[:assembly]}`.to_i > 0
-        info("file #{assembly[:assembly]} does not exist")
+    # Run all objectives functions for +:output+. 
+    def run_for_output(output, threads=6, cleanup=0, allresults=false)
+      # check output exists
+      unless File.exists?(output[:assembly]) && `wc -l #{output[:assembly]}`.to_i > 0
+        info("file #{output[:assembly]} does not exist")
         return nil
       end
-      # run all objectives for assembly
+      # run all objectives for output
       results = {}
       # create temp dir
       Dir.chdir(self.create_tempdir) do
@@ -121,24 +120,15 @@ module Biopsy
         end
         if cleanup == 1
           # remove all but essential files
-          essential_files = []
+          essential_files = domain.keep_intermediates
           @objectives.values.each{ |objective| essential_files += objective.essential_files }
           Dir["*"].each do |file|
             next if File.directory? file
             if essential_files.include? file
-              `gzip #{file}`
+              `gzip #{file}` if domain.gzip_intermediates
               FileUtils.mv("#{file}.gz", '..')
             end
           end
-          # Dir.chdir('output') do
-          #   Dir["*"].each do |file|
-          #     next if File.directory? file
-          #     if essential_files.include? file
-          #       `gzip #{file}`
-          #       FileUtils.mv("#{file}.gz", '../..')
-          #     end
-          #   end
-          # end
         end
       end
       unless cleanup == 0
@@ -153,9 +143,9 @@ module Biopsy
       end
     end
 
+    # create a guaranteed random temporary directory for storing outputs
+    # return the dirname
     def create_tempdir
-      # create a guaranteed random temporary directory for storing outputs
-      # return the dirname
       token = loop do
         # generate random dirnames until we find one that
         # doesn't exist

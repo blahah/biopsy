@@ -16,46 +16,43 @@ module Biopsy
 
   class Experiment
 
-    attr_reader :inputs, :outputs, :retain_intermediates, :target
+    attr_reader :inputs, :outputs, :retain_intermediates, :target, :start
 
-    # Initialises the Experiment
-    #
-    # ==== Attributes
-    # * +inputs+ a Hash mapping input types to filenames. Inputs will be passed to the target for execution with each run.
-    # * +outputs+ a Hash mapping output types to filenames. Outputs will be passed to objective fucntions.
-    # * +retain_intermediates+ a boolean indicating whether files other than the outputs should be retained during the experiment. The output files are those specified by each objective function.
-    # * +target+ Target object describing constructor and parameter ranges for the target program.
-    # * +best_parameters+ the set of best scoring parameters tested
-    # * +best_score+ the best score achieved during the experiment
-    #
-    # ==== Options
-    # * +:inputs+ see above
-    # * +:outputs+ see above
-    # * +:retain_intermediates+ see above
-    # * +:target+ see above
-    # * +:domain+ a Domain object representing the kind of optimisation experiment being performed
-    def initialize(domain)
-      @domain = domain
+    # Returns a new Experiment
+    def initialize(target_name, domain_name, start=nil, algorithm=nil)
+      @domain = Domain.new domain_name
+      @start = start
+      @algorithm = algorithm
 
-      self.load_target
+      self.load_target target_name
       self.select_algorithm
       self.select_starting_point
     end
 
     # return the set of parameters to evaluate first
     def select_starting_point
+      return unless @start.nil?
+      if @algorithm && @algorithm.knows_starting_point?
+        @start = @algorithm.select_starting_point
+      else
+        @start = self.random_start_point
+      end
+    end
 
+    # Return a random set of parameters from the parameter space.
+    def random_start_point
+      Hash[@target.parameter_ranges.map { |p, r| [p, r.sample] }] 
     end
 
     # select the optimisation algorithm to use
     def select_algorithm
-
+      @algorithm = TabuSearch.new(@target.parameter_ranges)
     end
 
-    # load the parameter ranges and constructor for the target
-    def load_target
-      # @ranges = @domain.get_ranges target
-      # @constructor = @domain.get_constructor target
+    # load the target named +:target_name+
+    def load_target target_name
+      @target = Target.new @domain
+      @target.load_by_name target_name
     end
 
     # Runs the experiment until the completion criteria
