@@ -16,7 +16,7 @@ module Biopsy
 
   class Experiment
 
-    attr_reader :inputs, :outputs, :retain_intermediates, :target, :start
+    attr_reader :inputs, :outputs, :retain_intermediates, :target, :start, :algorithm
 
     # Returns a new Experiment
     def initialize(target_name, domain_name, start=nil, algorithm=nil)
@@ -46,6 +46,8 @@ module Biopsy
 
     # select the optimisation algorithm to use
     def select_algorithm
+      @algorithm = ParameterSweeper.new(@target.parameter_ranges)
+      return if @algorithm.combinations.size < Settings.instance.sweep_cutoff
       @algorithm = TabuSearch.new(@target.parameter_ranges)
     end
 

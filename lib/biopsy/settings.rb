@@ -28,6 +28,7 @@ module Biopsy
     def initialize
       self.clear
       @config_file = '~/.biopsyrc'
+      self.set_defaults
     end
 
     # Loads settings from a YAML config file. If no file is
@@ -38,6 +39,17 @@ module Biopsy
       newsets = YAML::load_file(config_file)
       raise 'Config file was not valid YAML' if newsets == false
       @_settings = @_settings.deep_merge newsets.deep_symbolize
+    end
+
+    # Set defaults for settings
+    def set_defaults
+      self.base_dir = ['.']
+      self.target_dir = ['targets']
+      self.domain_dir = ['domains']
+      self.domain = 'test_domain'
+      self.objectives_dir = ['objectives']
+      self.objectives_subset = []
+      self.sweep_cutoff = 100
     end
 
     # Saves the settings to a YAML config file. If no file is

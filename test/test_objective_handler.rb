@@ -5,62 +5,31 @@ class TestObjectiveHandler < Test::Unit::TestCase
   context "ObjectiveHandler" do
 
     setup do
-      @target_data = {
-        :input_files => ['input.txt'],
-        :output_files => ['output.txt'],
-        :parameter_ranges => {
-          :a => [1, 2, 3, 4],
-          :b => [4, 6, 3, 2]
-        },
-        :constructor_path => 'test_con.rb'
-      }
-      @domain_data = {
-        :input_filetypes => [
-          {
-            :n => 1,
-            :allowed_extensions => [
-              '.txt'
-            ]
-          }
-        ],
-        :output_filetypes => [
-          {
-            :n => 1,
-            :allowed_extensions => [
-              '.txt'
-            ]
-          }
-        ],
-        :objectives => [
-          'test1', 'test2'
-        ]
-      }
-      tmpdir = '.tmp'
-      @tmpdir = File.expand_path(tmpdir)
-      Dir.mkdir(@tmpdir)
-      Biopsy::Settings.instance.target_dir = [@tmpdir]
-      Biopsy::Settings.instance.domain_dir = [@tmpdir]
-      File.open(File.join(@tmpdir, 'test_target.yml'), 'w') do |f|
-        f.puts @target_data.to_yaml
-      end
-      File.open(File.join(@tmpdir, 'test_domain.yml'), 'w') do |f|
-        f.puts @domain_data.to_yaml
-      end
-      @domain = Biopsy::Domain.new()
-      @target = Biopsy::Target.new
-      @target.load
+      @h = Helper.new
+      @h.setup_tmp_dir
+
+      # we need a domain
+      @h.setup_domain
+      domain_name = @h.create_valid_domain
+      @domain = Biopsy::Domain.new domain_name
+
+      # and a target
+      @h.setup_target
+      target_name = @h.create_valid_target
+      @target = Biopsy::Target.new @domain
+      @target.load_by_name target_name
+      
+      # and an objective
+      @h.setup_objective
+      objective_name = @h.create_valid_objective
     end
 
-    should "fail to init when no domain is provided" do
-      assert false
-    end
-
-    should "fail to init when no target is provided" do
-
+    teardown do
+      @h.cleanup
     end
 
     should "return loaded objectives on init" do
-      assert false
+      pp Biopsy::ObjectiveHandler.new @domain, @target
     end
 
     should "prefer local objective list to full set" do

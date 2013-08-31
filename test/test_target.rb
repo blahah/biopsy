@@ -7,75 +7,27 @@ class TestTarget < Test::Unit::TestCase
   context "Target" do
 
     setup do
-      # we need a valid config
-      @data = {
-        :input_files => ['left.fq', 'right.fq'],
-        :output_files => ['assembly.fa'],
-        :parameter_ranges => {
-          :a => [1, 2, 3, 4],
-          :b => [4, 6, 3, 2]
-        },
-        :constructor_path => 'test_con.rb'
-      }
-      @config_path = File.expand_path('test_target.yml')
-      File.open(@config_path, 'w') do |f|
-        f.puts @data.to_yaml
-      end
+      @h = Helper.new
+      @h.setup_tmp_dir
 
-      @settings = Biopsy::Settings.instance
+      # we need a domain
+      @h.setup_domain
+      domain_name = @h.create_valid_domain
+      @domain = Biopsy::Domain.new domain_name
 
-      # a spare dir for test-specific config files
-      Dir.mkdir('.tmp')
-      @fullpath = File.expand_path('.tmp')
-      @settings.target_dir = ['.', @fullpath]
-
-      # we need a valid domain too
-      @settings.domain = 'test_domain'
-      @settings.domain_dir = [@fullpath]
-      @domaindata = {
-        :input_filetypes => [
-          {
-            :min => 1,
-            :max => 2,
-            :allowed_extensions => [
-              'fastq',
-              'fq',
-              'fasta',
-              'fa',
-              'fas'
-            ]
-          }
-        ],
-        :output_filetypes => [
-          {
-            :n => 1,
-            :allowed_extensions => [
-              'fasta',
-              'fa',
-              'fas'
-            ]
-          }
-        ],
-        :objectives => [
-          'test1', 'test2'
-        ]
-      }
-      @domainpath = File.join(@fullpath, @settings.domain + '.yml')
-      File.open(@domainpath, 'w') do |f|
-        f.puts @domaindata.to_yaml
-      end
-
-      domain = Biopsy::Domain.new
-      @target = Biopsy::Target.new domain
+      # and a target
+      @h.setup_target
+      target_name = @h.create_valid_target
+      @target = Biopsy::Target.new @domain
+      @target.load_by_name target_name
     end
 
     teardown do
-      File.delete @config_path if File.exists? @config_path
-      FileUtils.rm_rf '.tmp'  if File.exists? '.tmp'
+      @h.cleanup
     end
 
     should "be able to find an existing definition" do
-      filepath = File.join(@fullpath, 'fake_thing.yml')
+      filepath = File.join(@h.target_dir, 'fake_thing.yml')
       File.open(filepath, 'w') do |f|
         f.puts "this doesn't matter"
       end
@@ -89,10 +41,10 @@ class TestTarget < Test::Unit::TestCase
 
     should "reject any invalid config" do
       # generate all trivial invalid configs
-      @data.keys.each do |key|
-        d = @data.clone
+      @h.target_data.keys.each do |key|
+        d = @h.target_data.clone
         d.delete key
-        filepath = File.join(@fullpath, 'broken_thing.yml')
+        filepath = File.join(@h.target_dir, 'broken_thing.yml')
         File.open(filepath, 'w') do |f|
           f.puts d.to_yaml
         end
@@ -106,29 +58,30 @@ class TestTarget < Test::Unit::TestCase
     end
 
     should "reject a config that doesn't match the domain spec" do
-      @data[:input_files] << 'another.file'
-      assert @target.validate_config(@data).length > 0
+      d = @h.target_data
+      d[:input_files] << 'another.file'
+      assert @target.validate_config(d).length > 0
     end
 
     should "be able to store a loaded config file" do
-      config = YAML::load_file(@config_path).deep_symbolize
+      config = YAML::load_file(@h.target_path).deep_symbolize
       @target.store_config config
-      @data.each_pair do |key, value|
+      @h.target_data.each_pair do |key, value|
         assert_equal value, @target.instance_variable_get('@' + key.to_s)
       end
     end
 
     should "recognise a malformed or missing constructor" do
-      config = YAML::load_file(@config_path).deep_symbolize
+      config = YAML::load_file(@h.target_path).deep_symbolize
       @target.store_config config
 
       assert !@target.check_constructor, "missing constructor is invalid"
 
-      File.open(@data[:constructor_path], 'w') do |f|
+      File.open(@h.target_data[:constructor_path], 'w') do |f|
         f.puts '[x**2 for x in range(10)]' # python :)
       end
       assert !@target.check_constructor, "invalid ruby is invalid"
-      File.delete @data[:constructor_path]
+      File.delete @h.target_data[:constructor_path]
     end
 
   end # Target context

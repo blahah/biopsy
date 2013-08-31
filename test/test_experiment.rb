@@ -5,56 +5,23 @@ class TestExperiment < Test::Unit::TestCase
   context "Experiment" do
 
     setup do
-      @target_data = {
-        :input_files => ['input.txt'],
-        :output_files => ['output.txt'],
-        :parameter_ranges => {
-          :a => [1, 2, 3, 4],
-          :b => [4, 6, 3, 2]
-        },
-        :constructor_path => 'test_con.rb'
-      }
-      @domain_data = {
-        :input_filetypes => [
-          {
-            :n => 1,
-            :allowed_extensions => [
-              '.txt'
-            ]
-          }
-        ],
-        :output_filetypes => [
-          {
-            :n => 1,
-            :allowed_extensions => [
-              '.txt'
-            ]
-          }
-        ],
-        :objectives => [
-          'test1', 'test2'
-        ]
-      }
-      tmpdir = '.tmp'
-      @tmpdir = File.expand_path(tmpdir)
-      Dir.mkdir(@tmpdir)
-      Biopsy::Settings.instance.target_dir = [@tmpdir]
-      Biopsy::Settings.instance.domain_dir = [@tmpdir]
-      File.open(File.join(@tmpdir, 'test_target.yml'), 'w') do |f|
-        f.puts @target_data.to_yaml
-      end
-      File.open(File.join(@tmpdir, 'test_domain.yml'), 'w') do |f|
-        f.puts @domain_data.to_yaml
-      end
+      @h = Helper.new
+      @h.setup_tmp_dir
+
+      # we need a domain
+      @h.setup_domain
+      domain_name = @h.create_valid_domain
+      @domain = Biopsy::Domain.new domain_name
+
+      # and a target
+      @h.setup_target
+      target_name = @h.create_valid_target
+      @target = Biopsy::Target.new @domain
+      @target.load_by_name target_name
     end
 
     teardown do
-      Dir.chdir(@tmpdir) do
-        Dir['*'].each do |f|
-          File.delete f
-        end
-      end
-      FileUtils.rm_rf @tmpdir  if File.exists? @tmpdir
+      @h.cleanup
     end
 
     should "fail to init when passed a non existent target" do
@@ -73,7 +40,7 @@ class TestExperiment < Test::Unit::TestCase
       e = Biopsy::Experiment.new('test_target', 'test_domain')
       start_point = e.random_start_point
       start_point.each_pair do |param, value|
-        assert @target_data[:parameter_ranges][param].include? value
+        assert @h.target_data[:parameter_ranges][param].include? value
       end
     end
 
@@ -81,7 +48,7 @@ class TestExperiment < Test::Unit::TestCase
       e = Biopsy::Experiment.new('test_target', 'test_domain')
       start_point = e.start
       start_point.each_pair do |param, value|
-        assert @target_data[:parameter_ranges][param].include? value
+        assert @h.target_data[:parameter_ranges][param].include? value
       end
     end
 
@@ -92,7 +59,8 @@ class TestExperiment < Test::Unit::TestCase
     end
 
     should "automatically select an optimiser if none is specified" do
-      assert false
+      e = Biopsy::Experiment.new('test_target', 'test_domain')
+      assert e.algorithm.kind_of? Biopsy::TabuSearch
     end
 
     should "return an optimal set of parameters and score when run" do

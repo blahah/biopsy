@@ -40,9 +40,10 @@ module Biopsy
 
     def initialize domain, target
       @domain = domain
+      @target = target
       base_dir = Settings.instance.base_dir
       $LOAD_PATH.unshift(base_dir)
-      @objectives_dir = File.join(base_dir, Settings.instance.objectives_dir)
+      @objectives_dir = Settings.instance.objectives_dir.first
       @objectives = {}
       @subset = Settings.instance.objectives_subset
       self.load_objectives
@@ -53,14 +54,16 @@ module Biopsy
     def load_objectives
       # load objectives
       # load subset list if available
-      subset_file = @objectives_dir+'/objectives.txt'
+      subset_file = @objectives_dir + '/objectives.txt'
       subset = File.exists?(subset_file) ? File.open(subset_file).readlines : nil
       subset = @subset if subset.nil?
       # parse in objectives
       Dir.chdir @objectives_dir do
-        Dir['*.rb'].each do |file|
-          require_relative @objectives_dir + '/' + file
-          file_name = File.basename(file, '.rb')
+        Dir['*.rb'].each do |f|
+          file_name = File.basename(f, '.rb')
+          path = File.join(@objectives_dir, f)
+          pp path
+          require [path]
           objective_name = file_name.camelize
           objective =  Module.const_get(objective_name).new
           if subset.nil? or subset.include?(file_name)
@@ -79,7 +82,7 @@ module Biopsy
         # output is a hash containing the file(s) output
         # by the target in the format expected by the
         # objective function(s).
-        return objective.run(assembly, threads)
+        return objective.run(output, threads)
       rescue NotImplementedError => e
         puts "Error: objective function #{name} does not implement the run() method"
         puts "Please refer to the documentation for instructions on adding objective functions"
