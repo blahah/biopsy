@@ -6,9 +6,8 @@ class TestSettings < Test::Unit::TestCase
 
     setup do
       @data = {
-        :domain => 'testdomain',
-        :objective_dir => './objectives',
-        :optimiser_dir => './optimisers'
+        :domain => 'test_domain',
+        :objectives_dir => './objectives',
       }
       @config_file = File.expand_path 'testconfig.yml'
       @settings = Biopsy::Settings.instance
@@ -24,8 +23,7 @@ class TestSettings < Test::Unit::TestCase
 
     should "load the specified config file" do
       assert @settings.domain == @data[:domain]
-      assert @settings.objective_dir == @data[:objective_dir]
-      assert @settings.optimiser_dir == @data[:optimiser_dir]
+      assert @settings.objectives_dir == @data[:objectives_dir]
     end
 
     should "complain about malformed config file" do
@@ -41,7 +39,10 @@ class TestSettings < Test::Unit::TestCase
     should "be able to save settings and load them identically" do
       @settings.save @config_file
       @settings.load @config_file
-      assert_equal @data, @settings._settings
+      @data.each_pair do |key, value|
+        varname = "@#{key.to_s}".to_sym
+        assert_equal value, @settings.instance_variable_get(varname)
+      end
     end
 
     should "be a singleton" do
@@ -50,37 +51,22 @@ class TestSettings < Test::Unit::TestCase
 
     should "make loaded settings available as methods" do
       assert @settings.domain == @data[:domain], 'domain key not loaded as method'
-      assert @settings.objective_dir == @data[:objective_dir], 'objective_dir key not loaded as method'
-      assert @settings.optimiser_dir == @data[:optimiser_dir], 'domain key not loaded as method'
-    end
-
-    should "allow adding a new setting" do
-      test_value = 'this is a test string'
-      @settings.fake_entry = test_value
-      assert_equal test_value, @settings.fake_entry
-      @settings.clear
+      assert @settings.objectives_dir == @data[:objectives_dir], 'objectives_dir key not loaded as method'
     end
 
     should "produce a YAML string representation" do
-      assert_equal @settings.to_s, @data.to_yaml
-    end
-
-    should "produce a flattened list of settings" do
-      assert_equal @settings.list_settings, @data.flatten
+      s = @settings.to_s
+      h = YAML.load(s)
+      @data.each_pair do |key, value|
+        varname = "@#{key.to_s}".to_sym
+        assert_equal value, @settings.instance_variable_get(varname)
+      end
     end
 
     should "error when a non-existent config is requested" do
       assert_raise Biopsy::SettingsError do
         @settings.locate_config :fake_key, 'blah'
       end
-    end
-
-    should "pass non-setting methods to super" do
-      assert_raise NoMethodError do
-        @settings.fake_method_name
-      end
-
-      assert !@settings.respond_to_missing?('fakename')
     end
 
   end # RunHandler context
