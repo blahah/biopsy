@@ -29,11 +29,35 @@ class TestObjectiveHandler < Test::Unit::TestCase
     end
 
     should "return loaded objectives on init" do
-      pp Biopsy::ObjectiveHandler.new @domain, @target
+      oh = Biopsy::ObjectiveHandler.new @domain, @target
+      refute oh.objectives.empty?
     end
 
     should "prefer local objective list to full set" do
-      assert false
+      Dir.chdir(@h.objective_dir) do
+        objective = %{
+          class AnotherObjective < Biopsy::ObjectiveFunction
+            def run(input)
+              a = input[:a]
+              b = input[:b]
+              c = input[:c]
+              # should be easy - convex function taken from http://www.economics.utoronto.ca/osborne/MathTutorial/CVNF.HTM
+              #  f (x1, x2, x3) = x12 + 2x22 + 3x32 + 2x1x2 + 2x1x3
+              # optimum is a=100, b=100, c=50, score=57800
+              a**2 + 2 * (b**2) + 3 * (c**2) + 2 * (a * b) + 2 * (a + c)
+            end
+          end
+        }
+        File.open('another_objective.rb', 'w') do |f|
+          f.puts objective
+        end
+        File.open('objectives.txt', 'w') do |f|
+          f.puts 'another_objective'
+        end
+      end
+      oh = Biopsy::ObjectiveHandler.new @domain, @target
+      assert_equal 1, oh.objectives.length
+      assert_equal 'AnotherObjective', oh.objectives.keys.first
     end
 
     should "run an objective and return the result" do

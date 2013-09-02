@@ -15,6 +15,8 @@ require 'biopsy'
 Turn.config.format = :pretty
 Turn.config.trace = 2
 
+Biopsy::Settings.instance.set_defaults
+
 # Helper class provides methods for setting up test data.
 class Helper
 
@@ -120,7 +122,7 @@ class Helper
 
   def create_valid_objective
     objective = %{
-      class TestObjective < Biopsy:ObjectiveFunction
+      class TestObjective < Biopsy::ObjectiveFunction
         def run(input)
           a = input[:a]
           b = input[:b]

@@ -37,15 +37,16 @@ module Biopsy
   class ObjectiveHandler
 
     attr_reader :last_tempdir
+    attr_accessor :objectives
 
     def initialize domain, target
       @domain = domain
       @target = target
       base_dir = Settings.instance.base_dir
-      $LOAD_PATH.unshift(base_dir)
       @objectives_dir = Settings.instance.objectives_dir.first
       @objectives = {}
-      @subset = Settings.instance.objectives_subset
+      $LOAD_PATH.unshift(@objectives_dir)
+      @subset = Settings.instance.respond_to?(:objectives_subset) ? Settings.instance.objectives_subset : nil
       self.load_objectives
       # pass objective list back to caller
       return @objectives.keys
@@ -55,15 +56,13 @@ module Biopsy
       # load objectives
       # load subset list if available
       subset_file = @objectives_dir + '/objectives.txt'
-      subset = File.exists?(subset_file) ? File.open(subset_file).readlines : nil
+      subset = File.exists?(subset_file) ? File.open(subset_file).readlines.map{ |l| l.strip } : nil
       subset = @subset if subset.nil?
       # parse in objectives
       Dir.chdir @objectives_dir do
         Dir['*.rb'].each do |f|
           file_name = File.basename(f, '.rb')
-          path = File.join(@objectives_dir, f)
-          pp path
-          require [path]
+          require file_name
           objective_name = file_name.camelize
           objective =  Module.const_get(objective_name).new
           if subset.nil? or subset.include?(file_name)
@@ -71,7 +70,7 @@ module Biopsy
             @objectives[objective_name] = objective
           end
         end
-        puts "loaded #{@objectives.length} objectives."
+        # puts "loaded #{@objectives.length} objectives."
       end
     end
 
