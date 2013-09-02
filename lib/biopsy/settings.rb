@@ -23,12 +23,28 @@ module Biopsy
   class Settings
     include Singleton
 
-    attr_reader :_settings
+    attr_accessor :base_dir
+    attr_accessor :target_dir
+    attr_accessor :domain_dir
+    attr_accessor :domain
+    attr_accessor :objectives_dir
+    attr_accessor :objectives_subset
+    attr_accessor :sweep_cutoff
 
     def initialize
-      self.clear
-      @config_file = '~/.biopsyrc'
       self.set_defaults
+    end
+
+    def set_defaults
+      # defaults
+      @config_file = '~/.biopsyrc'
+      @base_dir = ['.']
+      @target_dir = ['targets']
+      @domain_dir = ['domains']
+      @domain = 'test_domain'
+      @objectives_dir = ['objectives']
+      @objectives_subset = nil
+      @sweep_cutoff = 100
     end
 
     # Loads settings from a YAML config file. If no file is
@@ -38,73 +54,47 @@ module Biopsy
     def load(config_file=@config_file)
       newsets = YAML::load_file(config_file)
       raise 'Config file was not valid YAML' if newsets == false
-      @_settings = @_settings.deep_merge newsets.deep_symbolize
-    end
-
-    # Set defaults for settings
-    def set_defaults
-      self.base_dir = ['.']
-      self.target_dir = ['targets']
-      self.domain_dir = ['domains']
-      self.domain = 'test_domain'
-      self.objectives_dir = ['objectives']
-      self.objectives_subset = []
-      self.sweep_cutoff = 100
+      newsets.deep_symbolize.each_pair do |key, value|
+        varname = "@#{key.to_s}".to_sym
+        unless self.instance_variables.include? varname
+          raise SettingsError.new "Key #{key.to_s} in settings file is not valid"
+        end
+        self.instance_variable_set(varname, value)
+      end
     end
 
     # Saves the settings to a YAML config file. If no file is
     # specified, the default location ('~/.biopsyrc') is used.
     def save(config_file=@config_file)
-      ::File.open(config_file, 'w') do |f|
+      File.open(config_file, 'w') do |f|
         f.puts self.to_s
       end
     end
 
-    # Defines methods dynamically based on the contents of the
-    # settings store. E.g. if the settings store has a key
-    # :the_key, the method Settings.instance.the_key will be
-    # valid.
-    # Also allows arbitrary new methods to be defined using normal
-    # assignent. E.g. if there is no key :the_key, then
-    # Settings.instance.the_key = 'the value' will create it.
-    def method_missing(name, *args, &block)
-      if args.empty?
-        # access the value
-        @_settings[name.to_sym] || super
-      elsif name.to_s[-1] == '='
-        # assign the value
-        @_settings[name.to_s[0..-2].to_sym] = args[0]
+    # Returns a hash of the settings
+    def all_settings
+      settings = {}
+      instance_variables.each do |var|
+        key = var[1..-1]
+        settings[key] = self.instance_variable_get(var)
       end
-    end
-
-    # See above
-    def respond_to_missing?(name, include_private = false)
-      @_settings.has_key? name.to_sym || super
-    end
-
-    # Returns a flat array of the settings
-    def list_settings
-      @_settings.flatten
+      settings
     end
 
     # Returns a YAML string representation of the settings
     def to_s
-      @_settings.to_yaml
-    end
-
-    # empties the settings
-    def clear
-      @_settings = {}
+      all_settings.to_yaml
     end
 
     # Locate the first YAML config file whose name
     # excluding extension matches +:name+ (case insensitive)
     # in dirs listed by the +:dir_key+ setting.
     def locate_config(dir_key, name)
-      unless @_settings.has_key? dir_key
+      dir_key = "@#{dir_key.to_s}".to_sym
+      unless self.instance_variables.include? dir_key
         raise SettingsError.new "no setting found for compulsory key #{dir_key}"
       end
-      @_settings[dir_key].each do |dir|
+      self.instance_variable_get(dir_key).each do |dir|
         Dir.chdir ::File.expand_path(dir) do
           Dir[name + '.yml'].each do |file|
             return ::File.expand_path(file) if ::File.basename(file, '.yml').downcase == name.downcase
