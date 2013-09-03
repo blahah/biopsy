@@ -92,7 +92,7 @@ module Biopsy
         if n >= 10
           # taking too long to generate a neighbour, 
           # loosen the neighbourhood structure so we explore further
-          debug("loosening distributions")
+          # debug("loosening distributions")
           @distributions.each do |param, dist|
             dist.loosen
           end
@@ -148,7 +148,7 @@ module Biopsy
 
       # solution tracking
       @current = Hash[parameter_ranges.map { |param, range| [param, range.sample] }]
-      @best = {:score => 0}
+      @best = nil
 
       # tabu list
       @tabu = Set.new
@@ -156,16 +156,17 @@ module Biopsy
       @start_time = Time.now
 
       # neighbourhoods
-      @max_hood_size = 50
-      @starting_sd_divisor = 30
-      @sd_increment_proportion = 0.1
+      @max_hood_size = 5
+      @starting_sd_divisor = 5
+      @sd_increment_proportion = 0.05
       self.define_neighbourhood_structure
       @current_hood = Biopsy::Hood.new(@distributions, @max_hood_size, @tabu)
       @hood_no = 1
 
       # backtracking
       @iterations_since_best = 0
-      @backtrack_cutoff = 3
+      @backtrack_cutoff = 1.5
+      @backtracks = 1.0
 
     end # initialize
 
@@ -191,7 +192,7 @@ module Biopsy
 
     def update_best? current
       @current_hood.update_best? current
-      if @current[:score] > @best[:score]
+      if @best.nil? || @current[:score] > @best[:score]
         @best = @current
       else
         @iterations_since_best += 1
@@ -211,7 +212,8 @@ module Biopsy
     # update the neighbourhood structure by adjusting the probability
     # distributions according to total performance of each parameter
     def update_neighbourhood_structure
-      self.backtrack_or_continue()[:parameters].each_pair do |param, value|
+      best = self.backtrack_or_continue
+      best[:parameters].each_pair do |param, value|
         self.update_distribution(param, value)
       end
     end
@@ -232,9 +234,9 @@ module Biopsy
     # or to backtrack to a previous good location to explore further
     def backtrack_or_continue
       best = nil
-      if @iterations_since_best >= @backtrack_cutoff * @max_hood_size
-        @iterations_since_best = 0
-        debug('backtracked to best')
+      if (@iterations_since_best / @backtracks) >= @backtrack_cutoff * @max_hood_size
+        @backtracks += 1.0
+        # debug('backtracked to best')
         best = @best
       else
         best = @current_hood.best
@@ -249,7 +251,7 @@ module Biopsy
     # shift to the next neighbourhood
     def next_hood
       @hood_no += 1
-      debug("entering hood # #{@hood_no}")
+      # debug("entering hood # #{@hood_no}")
       self.update_neighbourhood_structure
       @current_hood = Hood.new(@distributions, @max_hood_size, @tabu)
     end
@@ -259,7 +261,7 @@ module Biopsy
       @current = @current_hood.next
       # exhausted the neighbourhood?
       if @current_hood.last?
-        debug(@current_hood.best)
+        # debug(@current_hood.best)
         self.next_hood
       end
     end
@@ -273,7 +275,7 @@ module Biopsy
     # check termination conditions 
     # and return true if met
     def finished?
-      false
+      @iterations_since_best >= 1000
     end
 
     # True if this algorithm chooses its own starting point

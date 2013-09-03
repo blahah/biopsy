@@ -13,7 +13,7 @@ require 'shoulda-context'
 require 'biopsy'
 
 Turn.config.format = :pretty
-Turn.config.trace = 2
+Turn.config.trace = 10
 
 Biopsy::Settings.instance.set_defaults
 
@@ -48,14 +48,18 @@ class Helper
   # Return a hash of valid target data
   def target_data
     {
-      :input_files => ['input.txt'],
-      :output_files => ['output.txt'],
-      :parameter_ranges => {
-        :a => (3..300).step(3).to_a,
-        :b => (2..50).step(2).to_a,
-        :c => (1..100).to_a
+      :input_files => {
+        :in => 'input.txt'
       },
-      :constructor_path => 'test_con.rb'
+      :output_files => {
+        :params => 'output.txt'
+      },
+      :parameter_ranges => {
+        :a => (-40..40).step(2).to_a,
+        :b => (0..100).step(2).to_a,
+        :c => (-50..50).to_a
+      },
+      :constructor_path => 'test_constructor.rb'
     }
   end
 
@@ -72,6 +76,22 @@ class Helper
     name = 'test_target'
     @target_path = File.join(@target_dir, name + '.yml')
     self.yaml_dump data, @target_path
+    File.open(File.join(@target_dir, data[:constructor_path]), 'w') do |f|
+      f.puts %Q{
+class TestConstructor
+
+  require 'yaml'
+
+  def run(params)
+    File.open('output.txt', 'w') do |f|
+      f.puts(params.to_yaml)
+    end
+    { :params => File.expand_path('output.txt') }
+  end
+
+end
+      }
+    end
     name
   end
 
@@ -121,18 +141,32 @@ class Helper
   end
 
   def create_valid_objective
-    objective = %{
-      class TestObjective < Biopsy::ObjectiveFunction
-        def run(input)
-          a = input[:a]
-          b = input[:b]
-          c = input[:c]
-          # should be easy - convex function taken from http://www.economics.utoronto.ca/osborne/MathTutorial/CVNF.HTM
-          #  f (x1, x2, x3) = x12 + 2x22 + 3x32 + 2x1x2 + 2x1x3
-          # optimum is a=100, b=100, c=50, score=57800
-          a**2 + 2 * (b**2) + 3 * (c**2) + 2 * (a * b) + 2 * (a + c)
-        end
-      end
+    objective = %Q{
+class TestObjective < Biopsy::ObjectiveFunction
+
+  require 'yaml'
+
+  def initialize
+    @optimum = 0
+    @max = 0
+    @weighting = 1
+  end
+
+  def run(input, threads)
+    file = input[:params]
+    input = YAML::load_file(file)
+    a = input[:a].to_i
+    b = input[:b].to_i
+    c = input[:c].to_i
+    value = - Math.sqrt((a-4)**2) - Math.sqrt((b-4)**2) - Math.sqrt((c-4)**2)
+    {
+      :optimum => @optimum,
+      :max => @max,
+      :weighting => @weighting,
+      :result => value
+    }
+  end
+end
     }
     @objective_path = File.join(@objective_dir, 'test_objective.rb')
     self.string_dump objective, @objective_path

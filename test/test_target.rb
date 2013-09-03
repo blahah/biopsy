@@ -59,7 +59,7 @@ class TestTarget < Test::Unit::TestCase
 
     should "reject a config that doesn't match the domain spec" do
       d = @h.target_data
-      d[:input_files] << 'another.file'
+      d[:input_files][:fake] = 'another.file'
       assert @target.validate_config(d).length > 0
     end
 

@@ -37,14 +37,8 @@ class TestObjectiveHandler < Test::Unit::TestCase
       Dir.chdir(@h.objective_dir) do
         objective = %{
           class AnotherObjective < Biopsy::ObjectiveFunction
-            def run(input)
-              a = input[:a]
-              b = input[:b]
-              c = input[:c]
-              # should be easy - convex function taken from http://www.economics.utoronto.ca/osborne/MathTutorial/CVNF.HTM
-              #  f (x1, x2, x3) = x12 + 2x22 + 3x32 + 2x1x2 + 2x1x3
-              # optimum is a=100, b=100, c=50, score=57800
-              a**2 + 2 * (b**2) + 3 * (c**2) + 2 * (a * b) + 2 * (a + c)
+            def run(input, threads)
+              10
             end
           end
         }
@@ -61,19 +55,43 @@ class TestObjectiveHandler < Test::Unit::TestCase
     end
 
     should "run an objective and return the result" do
-      assert false
+      oh = Biopsy::ObjectiveHandler.new @domain, @target
+      values = {
+        :a => 4,
+        :b => 4,
+        :c => 4
+      }
+      file = File.expand_path(File.join(@h.tmp_dir, 'output.txt'))
+      File.open(file, 'w') do |f|
+        f.puts values.to_yaml
+      end
+      result = oh.run_for_output({:params => file}, 0, 1, allresults=true)
+      assert_equal 0, result[:results]["TestObjective"][:result]
     end
 
     should "perform euclidean distance dimension reduction" do
-      assert false
-    end
-
-    should "update current parameters after each iteration run" do
-      assert false
-    end
-
-    should "run all objectives for an output, returning results" do
-      assert false
+      oh = Biopsy::ObjectiveHandler.new @domain, @target
+      results = {
+        :a => {
+          :optimum => 100,
+          :weighting => 1,
+          :result => 49,
+          :max => 100
+        },
+        :b => {
+          :optimum => 1,
+          :weighting => 1,
+          :result => 62,
+          :max => 100
+        },
+        :c => {
+          :optimum => 0,
+          :weighting => 1,
+          :result => 33,
+          :max => 66
+        }
+      }
+      assert_equal 0.47140452079103173, oh.dimension_reduce(results)
     end
 
   end # Experiment context

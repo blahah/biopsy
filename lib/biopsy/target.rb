@@ -42,6 +42,7 @@ module Biopsy
       end
       self.store_config config
       self.check_constructor
+      self.load_constructor
     end
 
     # given the name of a target, return the path
@@ -85,6 +86,19 @@ module Biopsy
     def check_constructor
       raise "constructor path is not defined for this target" if @constructor_path.nil?
       self.valid_ruby? @constructor_path
+    end
+
+    # Load constructor
+    def load_constructor
+      require File.join(Settings.instance.target_dir, @constructor_path)
+      file_name = File.basename(@constructor_path, '.rb')
+      constructor_name = file_name.camelize
+      @constructor = Module.const_get(constructor_name).new
+    end
+
+    # Run the constructor for the parameter set +:params+
+    def run params
+      @constructor.run params
     end
 
     # true if file is valid ruby

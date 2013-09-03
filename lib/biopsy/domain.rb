@@ -11,6 +11,8 @@ module Biopsy
     attr_reader :input_filetypes
     attr_reader :output_filetypes
     attr_reader :objectives
+    attr_reader :keep_intermediates
+    attr_reader :gzip_intermediates
 
     require 'yaml'
     require 'pp'
@@ -19,6 +21,9 @@ module Biopsy
     # currently active domain.
     def initialize domain=nil
       @name = domain.nil? ? self.get_current_domain : domain
+
+      @keep_intermediates = false
+      @gzip_intermediates = false
       self.load_by_name @name
     end
 
@@ -78,8 +83,8 @@ module Biopsy
     def validate_target_filetypes testcase, definition
       errors = []
       # check extensions
-      testcase.each do |f|
-        ext = ::File.extname(f)
+      testcase.each_pair do |key, f|
+        ext = File.extname(f)
         unless definition[:allowed_extensions].include? ext
           errors << %Q{input file #{f} doesn't match any of the filetypes
                        allowed for this domain}

@@ -25,6 +25,7 @@ module Biopsy
       @algorithm = algorithm
 
       self.load_target target_name
+      @objective = ObjectiveHandler.new(@domain, @target)
       self.select_algorithm
       self.select_starting_point
     end
@@ -62,13 +63,13 @@ module Biopsy
     # set.
     def run
       in_progress = true
-      @current_params = select_first_params
+      @current_params = @start
       while in_progress do
         run_iteration
         # update the best result
-        @best = @optimiser.best
+        @best = @algorithm.best
         # have we finished?
-        in_progress = !@optimiser.finished?
+        in_progress = !@algorithm.finished?
       end
       return @best
     end
@@ -78,11 +79,11 @@ module Biopsy
     # Returns the output of the optimiser.
     def run_iteration
       # run the target
-      run_data = @constructor.run @current_params
+      run_data = @target.run @current_params
       # evaluate with objectives
-      result = @objective.run run_data
+      result = @objective.run_for_output run_data
       # get next steps from optimiser
-      @current_params = @optimiser.run result
+      @current_params = @algorithm.run_one_iteration(@current_params, result)
     end
 
   end # end of class RunHandler

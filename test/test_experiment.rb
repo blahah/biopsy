@@ -18,6 +18,10 @@ class TestExperiment < Test::Unit::TestCase
       target_name = @h.create_valid_target
       @target = Biopsy::Target.new @domain
       @target.load_by_name target_name
+
+      # and an objective
+      @h.setup_objective
+      objective_name = @h.create_valid_objective
     end
 
     teardown do
@@ -64,11 +68,14 @@ class TestExperiment < Test::Unit::TestCase
     end
 
     should "return an optimal set of parameters and score when run" do
-      assert false
-    end
-
-    should "update current parameters after each iteration run" do
-      assert false
+      e = Biopsy::Experiment.new('test_target', 'test_domain')
+      known_best = {
+        :a => 4,
+        :b => 4,
+        :c => 4
+      }
+      best_found = e.run[:parameters]
+      assert_equal known_best, best_found
     end
 
   end # Experiment context

@@ -83,7 +83,7 @@ module Biopsy
         # objective function(s).
         return objective.run(output, threads)
       rescue NotImplementedError => e
-        puts "Error: objective function #{name} does not implement the run() method"
+        puts "Error: objective function #{objective.class} does not implement the run() method"
         puts "Please refer to the documentation for instructions on adding objective functions"
         raise e
       end
@@ -107,33 +107,37 @@ module Biopsy
     end
 
     # Run all objectives functions for +:output+. 
-    def run_for_output(output, threads=6, cleanup=0, allresults=false)
-      # check output exists
-      unless File.exists?(output[:assembly]) && `wc -l #{output[:assembly]}`.to_i > 0
-        info("file #{output[:assembly]} does not exist")
-        return nil
+    def run_for_output(output, threads=6, cleanup=true, allresults=false)
+      # check output files exist
+      @target.output_files.each_pair do |key, name|
+        unless File.exists?(output[key]) && File.size(output[key]) > 0
+          info("file #{output[key]} does not exist or is empty")
+          return nil
+        end
       end
       # run all objectives for output
       results = {}
       # create temp dir
       Dir.chdir(self.create_tempdir) do
         @objectives.each_pair do |name, objective|
-          results[name] = self.run_objective(objective, name, assembly, threads)
+          results[name] = self.run_objective(objective, name, output, threads)
         end
         if cleanup == 1
           # remove all but essential files
-          essential_files = domain.keep_intermediates
-          @objectives.values.each{ |objective| essential_files += objective.essential_files }
+          essential_files = @domain.keep_intermediates
+          if essential_files
+            @objectives.values.each{ |objective| essential_files += objective.essential_files }
+          end
           Dir["*"].each do |file|
             next if File.directory? file
-            if essential_files.include? file
-              `gzip #{file}` if domain.gzip_intermediates
+            if essential_files && essential_files.include?(file)
+              `gzip #{file}` if @domain.gzip_intermediates
               FileUtils.mv("#{file}.gz", '..')
             end
           end
         end
       end
-      unless cleanup == 0
+      if cleanup
         # clean up temp dir
         FileUtils.rm_rf @last_tempdir
       end
@@ -141,7 +145,9 @@ module Biopsy
         return {:results => results,
                 :reduced => self.dimension_reduce(results)}
       else
-        return self.dimension_reduce(results)
+        results.each do |key, value|
+          return value[:result]
+        end
       end
     end
 
