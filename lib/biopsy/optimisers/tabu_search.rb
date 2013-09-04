@@ -24,6 +24,7 @@ module Biopsy
     def initialize(mean, range, sd_increment_proportion, sd)
       @mean = mean
       @maxsd = range.size * 0.66
+      @minsd = 0.5
       @sd = sd
       self.limit_sd
       @range = range
@@ -40,7 +41,7 @@ module Biopsy
 
     def limit_sd
       @sd = @sd > @maxsd ? @maxsd : @sd
-      @sd = @sd == 0 ? 0.01 : @sd
+      @sd = @sd < @minsd ? @minsd : @sd
     end
 
     # loosen the distribution by increasing the sd
@@ -59,22 +60,22 @@ module Biopsy
       self.generate_distribution
     end
 
+    # set standard deviation to the minimum possible value
+    def set_sd_min
+      @sd = @minsd
+    end
+
     # draw from the distribution
     def draw
       r = @dist.rng.to_i
       raise "drawn number must be an integer" unless r.is_a? Integer
       # keep the value inside the allowed range
-      r = @range.size - r if r >= @range.size
       r = 0 - r if r < 0
-      # discretise
-      drawn = @mean
-      @range.each_with_index do |v, i|
-        if i >= r
-          drawn  = v
-          break
-        end
+      if r >= @range.size
+        diff = 1 + r - @range.size
+        r = @range.size - diff
       end
-      drawn
+      @range[r]
     end
 
   end # Distribution
@@ -106,7 +107,7 @@ module Biopsy
     def generate_neighbour
       n = 0
       begin
-        if n >= 10
+        if n >= 100
           # taking too long to generate a neighbour, 
           # loosen the neighbourhood structure so we explore further
           # debug("loosening distributions")
@@ -157,7 +158,8 @@ module Biopsy
   class TabuSearch #< OptmisationAlgorithm
 
     attr_reader :current, :best, :hood_no
-    attr_writer :max_hood_size, :sd_increment_proportion, :starting_sd_divisor, :backtrack_cutoff
+    attr_accessor :max_hood_size, :sd_increment_proportion, :starting_sd_divisor, :backtrack_cutoff
+    attr_accessor :jump_cutoff
 
     def initialize(parameter_ranges, threads=8, limit=nil)
 
@@ -187,17 +189,10 @@ module Biopsy
 
       # backtracking
       @iterations_since_best = 0
-      @backtrack_cutoff = 1.5
+      @backtrack_cutoff = 2
       @backtracks = 1.0
 
     end # initialize
-
-    # if not being controlled by RunController, #run
-    # will conduct the optimisation experiment.
-    # intended only for internal testing use
-    def run
-      nil
-    end # run
 
     # given the score for a parameter set,
     # return the next parameter set to be scored
@@ -234,12 +229,11 @@ module Biopsy
     # update the neighbourhood structure by adjusting the probability
     # distributions according to total performance of each parameter
     def update_neighbourhood_structure
+      self.update_recent_scores
+      best = self.backtrack_or_continue
       unless @distributions.empty?
         @standard_deviations = Hash[@distributions.map { |k, d| [k, d.sd] }]
       end
-      self.update_recent_scores
-      self.adjust_distributions_using_gradient
-      best = self.backtrack_or_continue
       best[:parameters].each_pair do |param, value|
         self.update_distribution(param, value)
       end
@@ -268,17 +262,24 @@ module Biopsy
     def backtrack_or_continue
       best = nil
       if (@iterations_since_best / @backtracks) >= @backtrack_cutoff * @max_hood_size
-        @backtracks += 1.0
-        # debug('backtracked to best')
+        self.backtrack
         best = @best
       else
         best = @current_hood.best
+        self.adjust_distributions_using_gradient
       end
       if best[:parameters].nil?
         # this should never happen!
         best = @best        
       end
       best
+    end
+
+    def backtrack
+      @backtracks += 1.0
+      # debug('backtracked to best')
+      pp @distributions.map { |k, d| d.sd }
+      @distributions.each_pair { |k, d| d.tighten }
     end
 
     # update the array of recent scores
@@ -294,8 +295,11 @@ module Biopsy
       vy = @recent_scores.reverse.to_scale
       r = Statsample::Regression::Simple.new_from_vectors(vx,vy)
       slope = r.b
-      return if slope == 0
-      @standard_deviations = Hash[@standard_deviations.map { |k, v| [k, v * slope]}]
+      if slope > 0
+        @distributions.each_pair { |k, d| d.tighten slope }
+      elsif slope < 0
+        @distributions.each_pair { |k, d| d.loosen slope }
+      end
     end
 
     # shift to the next neighbourhood
@@ -325,7 +329,12 @@ module Biopsy
     # check termination conditions 
     # and return true if met
     def finished?
-      @iterations_since_best >= 1000
+      if @iterations_since_best >= 100
+        puts "iterations: #{@tabu.size}"
+        puts "backtracks: #{@backtracks}"
+        pp @standard_deviations
+      end
+      @iterations_since_best >= 100
     end
 
     # True if this algorithm chooses its own starting point
