@@ -278,7 +278,6 @@ module Biopsy
     def backtrack
       @backtracks += 1.0
       # debug('backtracked to best')
-      pp @distributions.map { |k, d| d.sd }
       @distributions.each_pair { |k, d| d.tighten }
     end
 

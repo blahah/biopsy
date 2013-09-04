@@ -21,7 +21,7 @@ class TestExperiment < Test::Unit::TestCase
 
       # and an objective
       @h.setup_objective
-      objective_name = @h.create_valid_objective
+      @h.create_valid_objective
     end
 
     teardown do
@@ -68,6 +68,7 @@ class TestExperiment < Test::Unit::TestCase
     end
 
     should "return an optimal set of parameters and score when run" do
+      Kernel.srand 123
       e = Biopsy::Experiment.new('test_target', 'test_domain')
       known_best = {
         :a => 4,
