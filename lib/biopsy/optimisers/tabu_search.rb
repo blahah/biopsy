@@ -1,6 +1,8 @@
 require 'rubystats'
+require 'statsample'
 require 'set'
 require 'pp'
+require 'matrix'
 
 # TODO:
 # - make distributions draw elements from the range, not just from distribution (DONE)
@@ -16,10 +18,14 @@ module Biopsy
   # distributions acts as a probabilistic neighbourhood structure.
   class Distribution
 
+    attr_reader :sd
+
     # create a new Distribution
-    def initialize(mean, range, sd_increment_proportion, starting_sd_divisor)
+    def initialize(mean, range, sd_increment_proportion, sd)
       @mean = mean
-      @sd = range.size.to_f / starting_sd_divisor # this is arbitrary - should we learn a good initial setting?
+      @maxsd = range.size * 0.66
+      @sd = sd
+      self.limit_sd
       @range = range
       @sd_increment_proportion = sd_increment_proportion
       self.generate_distribution
@@ -32,32 +38,43 @@ module Biopsy
       @dist = Rubystats::NormalDistribution.new(@mean, @sd)
     end
 
+    def limit_sd
+      @sd = @sd > @maxsd ? @maxsd : @sd
+      @sd = @sd == 0 ? 0.01 : @sd
+    end
+
     # loosen the distribution by increasing the sd
     # and renerating
-    def loosen
-      @sd += @sd_increment_proportion * @range.size
+    def loosen(factor=1)
+      @sd += @sd_increment_proportion * factor * @range.size
+      self.limit_sd
       self.generate_distribution
     end
 
     # tighten the distribution by reducing the sd
     # and regenerating
-    def tighten
-      @sd -= @sd_increment_proportion * @range.size unless (@sd <= 0.5)
+    def tighten(factor=1)
+      @sd -= @sd_increment_proportion * factor * @range.size unless (@sd <= 0.01)
+      self.limit_sd
       self.generate_distribution
     end
 
     # draw from the distribution
     def draw
       r = @dist.rng.to_i
+      raise "drawn number must be an integer" unless r.is_a? Integer
       # keep the value inside the allowed range
       r = @range.size - r if r >= @range.size
       r = 0 - r if r < 0
       # discretise
+      drawn = @mean
       @range.each_with_index do |v, i|
         if i >= r
-          return v
+          drawn  = v
+          break
         end
       end
+      drawn
     end
 
   end # Distribution
@@ -158,10 +175,15 @@ module Biopsy
       # neighbourhoods
       @max_hood_size = 5
       @starting_sd_divisor = 5
+      @standard_deviations = {}
       @sd_increment_proportion = 0.05
       self.define_neighbourhood_structure
       @current_hood = Biopsy::Hood.new(@distributions, @max_hood_size, @tabu)
       @hood_no = 1
+
+      # adjustment tracking
+      @recent_scores = []
+      @jump_cutoff = 10
 
       # backtracking
       @iterations_since_best = 0
@@ -212,21 +234,32 @@ module Biopsy
     # update the neighbourhood structure by adjusting the probability
     # distributions according to total performance of each parameter
     def update_neighbourhood_structure
+      unless @distributions.empty?
+        @standard_deviations = Hash[@distributions.map { |k, d| [k, d.sd] }]
+      end
+      self.update_recent_scores
+      self.adjust_distributions_using_gradient
       best = self.backtrack_or_continue
       best[:parameters].each_pair do |param, value|
         self.update_distribution(param, value)
       end
     end
 
-    # set the distribution for a parameter to a new one centered
+    # set the distribution for parameter +:param+ to a new one centered
     # around the index of +value+
     def update_distribution(param, value)
       mean = @ranges[param].index(value)
       range = @ranges[param]
+      sd = self.sd_for_param(param, range)
       @distributions[param] = Biopsy::Distribution.new(mean, 
                                                       range,
                                                       @sd_increment_proportion,
-                                                      @starting_sd_divisor)
+                                                      sd)
+    end
+
+    # return the standard deviation to use for +:param+
+    def sd_for_param(param, range)
+      @standard_deviations.empty? ? (range.size.to_f / @starting_sd_divisor) : @standard_deviations[param]
     end
 
     # return the correct 'best' location to form a new neighbourhood around
@@ -246,6 +279,23 @@ module Biopsy
         best = @best        
       end
       best
+    end
+
+    # update the array of recent scores
+    def update_recent_scores
+      @recent_scores.unshift @best[:score]
+      @recent_scores = @recent_scores.take @jump_cutoff
+    end
+
+    # use the gradient of recent best scores to update the distributions
+    def adjust_distributions_using_gradient
+      return if @recent_scores.length < 3
+      vx = (1..@recent_scores.length).to_a.to_scale
+      vy = @recent_scores.reverse.to_scale
+      r = Statsample::Regression::Simple.new_from_vectors(vx,vy)
+      slope = r.b
+      return if slope == 0
+      @standard_deviations = Hash[@standard_deviations.map { |k, v| [k, v * slope]}]
     end
 
     # shift to the next neighbourhood

@@ -16,6 +16,7 @@ Gem::Specification.new do |gem|
   gem.add_dependency 'rake', '~> 10.1.0'
   gem.add_dependency 'threach'
   gem.add_dependency 'rubystats'
+  gem.add_dependency 'statsample'
 
   gem.add_development_dependency 'turn'
   gem.add_development_dependency 'simplecov'
