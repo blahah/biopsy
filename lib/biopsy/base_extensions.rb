@@ -47,3 +47,14 @@ class Hash
   end
 
 end # Hash
+
+class Array
+
+  # return the arithmetic mean of the elements in the array.
+  # Requires the array to contain only objects of class Fixnum.
+  # If any other class is encountered, an error will be raised.
+  def mean
+    self.inject(0.0) { |sum, element| sum + element } / self.size
+  end
+
+end # Array

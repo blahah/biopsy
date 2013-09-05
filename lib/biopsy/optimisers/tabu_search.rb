@@ -162,6 +162,11 @@ module Biopsy
     attr_accessor :max_hood_size, :sd_increment_proportion, :starting_sd_divisor, :backtrack_cutoff
     attr_accessor :jump_cutoff
 
+    Thread = Struct.new(:best, :tabu, :distributions, 
+                        :standard_deviations, :recent_scores, 
+                        :iterations_since_best, :backtracks,
+                        :current, :current_hood)
+
     def initialize(parameter_ranges, threads=8, limit=nil)
 
       @ranges = parameter_ranges
@@ -195,14 +200,19 @@ module Biopsy
       @backtrack_cutoff = 2
       @backtracks = 1.0
 
+      # convergence
+      @num_threads = 3
+      @threads = []
+      self.setup_threads
+
+
     end # initialize
 
     def setup start_point
       puts "setup"
       @current = {:parameters => start_point, :score => nil}
       @best = @current
-      self.define_neighbourhood_structure
-      @current_hood = Biopsy::Hood.new(@distributions, @max_hood_size, @tabu)
+      self.setup_threads
     end
 
     # given the score for a parameter set,
@@ -213,10 +223,43 @@ module Biopsy
       self.update_best?
       # log any data
       self.log
+      # cycle threads
+      self.load_next_thread
       # get next parameter set to score
       self.next_candidate
       @current[:parameters]
     end # run_one_iteration
+
+    def setup_threads
+      @num_threads.times do
+        @threads << Thread.new
+      end
+      @threads.each do |thread|
+        thread.members.each do |sym|
+          ivar = self.sym_to_ivar_sym sym
+          self.instance_variable_set(ivar, thread[sym])
+        end
+        @current = {
+          :parameters => self.random_start_point,
+          :score => nil
+        }
+        @best = @current
+        @standard_deviations = {}
+        @recent_scores = []
+        @tabu = Set.new
+        self.define_neighbourhood_structure
+      end
+      @current_thread = @num_threads - 1
+    end
+
+    def load_next_thread
+      @current_thread = (@current_thread + 1) % @num_threads
+      thread = @threads[@current_thread]
+      thread.members.each do |sym|
+        ivar = self.sym_to_ivar_sym sym
+        self.instance_variable_set(ivar, thread[sym])
+      end
+    end
 
     def update_best?
       @current_hood.update_best? @current
@@ -334,18 +377,13 @@ module Biopsy
     # check termination conditions 
     # and return true if met
     def finished?
-      if @iterations_since_best >= 100
-        puts "iterations: #{@tabu.size}"
-        puts "backtracks: #{@backtracks}"
-        pp @standard_deviations
-        self.log_teardown
-      end
-      @iterations_since_best >= 100
+      scores = @threads.map { |t| t.recent_scores }
+      scores.map { |s| s.mean }.uniq.length == 1
     end
 
     # True if this algorithm chooses its own starting point
     def knows_starting_point?
-      false
+      true
     end
 
     def log_setup
@@ -371,6 +409,18 @@ module Biopsy
       @logfiles.each_pair do |k, f|
         f.close
       end
+    end
+
+    def sym_to_ivar_sym sym
+      "@#{sym.to_s}".to_sym
+    end
+
+    def select_starting_point
+      self.random_start_point
+    end
+
+    def random_start_point
+      Hash[@ranges.map { |p, r| [p, r.sample] }] 
     end
 
   end # TabuSearch
