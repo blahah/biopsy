@@ -119,12 +119,13 @@ module Biopsy
         neighbour = Hash[@distributions.map { |param, dist| [param, dist.draw] }]
         n += 1
       end while self.is_tabu?(neighbour)
+      @tabu << neighbour
       @members << neighbour
     end
 
     # update best?
     def update_best? current
-      @best = current if current[:score] > @best[:score]
+      @best = current.clone if current[:score] > @best[:score]
     end
 
     # true if location is tabu
@@ -166,7 +167,6 @@ module Biopsy
       @ranges = parameter_ranges
 
       # solution tracking
-      @current = Hash[parameter_ranges.map { |param, range| [param, range.sample] }]
       @best = nil
 
       # tabu list
@@ -179,13 +179,16 @@ module Biopsy
       @starting_sd_divisor = 5
       @standard_deviations = {}
       @sd_increment_proportion = 0.05
-      self.define_neighbourhood_structure
-      @current_hood = Biopsy::Hood.new(@distributions, @max_hood_size, @tabu)
       @hood_no = 1
 
       # adjustment tracking
       @recent_scores = []
       @jump_cutoff = 10
+
+      # logging
+      @log_data = false
+      @logfiles = {}
+      self.log_setup
 
       # backtracking
       @iterations_since_best = 0
@@ -194,23 +197,31 @@ module Biopsy
 
     end # initialize
 
+    def setup start_point
+      puts "setup"
+      @current = {:parameters => start_point, :score => nil}
+      @best = @current
+      self.define_neighbourhood_structure
+      @current_hood = Biopsy::Hood.new(@distributions, @max_hood_size, @tabu)
+    end
+
     # given the score for a parameter set,
     # return the next parameter set to be scored
     def run_one_iteration(parameters, score)
       @current = {:parameters => parameters, :score => score}
       # update best score?
-      self.update_best? @current
+      self.update_best?
+      # log any data
+      self.log
       # get next parameter set to score
       self.next_candidate
-      # update tabu list
-      self.update_tabu
-      @current
+      @current[:parameters]
     end # run_one_iteration
 
-    def update_best? current
-      @current_hood.update_best? current
-      if @best.nil? || @current[:score] > @best[:score]
-        @best = @current
+    def update_best?
+      @current_hood.update_best? @current
+      if @best[:score].nil? || @current[:score] > @best[:score]
+        @best = @current.clone
       else
         @iterations_since_best += 1
       end
@@ -221,7 +232,7 @@ module Biopsy
     def define_neighbourhood_structure
       # probabilities
       @distributions = {}
-      @current.each_pair do |param, value|
+      @current[:parameters].each_pair do |param, value|
         self.update_distribution(param, value)
       end
     end
@@ -311,18 +322,13 @@ module Biopsy
 
     # get the next neighbour to explore from the current hood
     def next_candidate
-      @current = @current_hood.next
+      @current[:parameters] = @current_hood.next
+      @current[:score] = nil
       # exhausted the neighbourhood?
       if @current_hood.last?
         # debug(@current_hood.best)
         self.next_hood
       end
-    end
-
-    # update the tabu list, performing any necessary manupulations
-    # such as removing the oldest entires if there is a size limit
-    def update_tabu
-       @tabu << @current
     end
 
     # check termination conditions 
@@ -332,6 +338,7 @@ module Biopsy
         puts "iterations: #{@tabu.size}"
         puts "backtracks: #{@backtracks}"
         pp @standard_deviations
+        self.log_teardown
       end
       @iterations_since_best >= 100
     end
@@ -339,6 +346,31 @@ module Biopsy
     # True if this algorithm chooses its own starting point
     def knows_starting_point?
       false
+    end
+
+    def log_setup
+      if @log_data
+        require 'csv'
+        @logfiles[:standard_deviations] = CSV.open('standard_deviations.csv', 'w')
+        @logfiles[:best] = CSV.open('best.csv', 'w')
+        @logfiles[:score] = CSV.open('score.csv', 'w')
+        @logfiles[:params] = CSV.open('params.csv', 'w')
+      end
+    end
+
+    def log
+      if @log_data
+        @logfiles[:standard_deviations] << @distributions.map { |k, d| d.sd }
+        @logfiles[:best] << [@best[:score]]
+        @logfiles[:score] << [@current[:score]]
+        @logfiles[:params] << @current[:parameters].map { |k, v| v }
+      end
+    end
+
+    def log_teardown
+      @logfiles.each_pair do |k, f|
+        f.close
+      end
     end
 
   end # TabuSearch

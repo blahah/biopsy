@@ -63,6 +63,7 @@ module Biopsy
     # set.
     def run
       in_progress = true
+      @algorithm.setup @start
       @current_params = @start
       while in_progress do
         run_iteration
