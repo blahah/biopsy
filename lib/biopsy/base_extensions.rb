@@ -54,7 +54,11 @@ class Array
   # Requires the array to contain only objects of class Fixnum.
   # If any other class is encountered, an error will be raised.
   def mean
-    self.inject(0.0) { |sum, element| sum + element } / self.size
+    self.sum / self.size.to_f
+  end
+
+  def sum
+    self.inject(0, :+)
   end
 
 end # Array

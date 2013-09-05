@@ -165,7 +165,7 @@ module Biopsy
     Thread = Struct.new(:best, :tabu, :distributions, 
                         :standard_deviations, :recent_scores, 
                         :iterations_since_best, :backtracks,
-                        :current, :current_hood)
+                        :current, :current_hood, :loaded)
 
     def initialize(parameter_ranges, threads=8, limit=nil)
 
@@ -201,15 +201,12 @@ module Biopsy
       @backtracks = 1.0
 
       # convergence
-      @num_threads = 3
+      @num_threads = 2
       @threads = []
-      self.setup_threads
-
 
     end # initialize
 
     def setup start_point
-      puts "setup"
       @current = {:parameters => start_point, :score => nil}
       @best = @current
       self.setup_threads
@@ -235,10 +232,6 @@ module Biopsy
         @threads << Thread.new
       end
       @threads.each do |thread|
-        thread.members.each do |sym|
-          ivar = self.sym_to_ivar_sym sym
-          self.instance_variable_set(ivar, thread[sym])
-        end
         @current = {
           :parameters => self.random_start_point,
           :score => nil
@@ -248,11 +241,26 @@ module Biopsy
         @recent_scores = []
         @tabu = Set.new
         self.define_neighbourhood_structure
+        @current_hood = Biopsy::Hood.new(@distributions, @max_hood_size, @tabu)
+        thread.members.each do |sym|
+          ivar = self.sym_to_ivar_sym sym
+          thread[sym] = self.instance_variable_get(ivar)
+        end
+        thread.loaded = false
       end
-      @current_thread = @num_threads - 1
+      @current_thread = @num_threads - 2
     end
 
     def load_next_thread
+      thread = @threads[@current_thread]
+      if thread.loaded
+        thread.members.each do |sym|
+          ivar = self.sym_to_ivar_sym sym
+          thread[sym] = self.instance_variable_get(ivar)
+        end
+      else
+        thread.loaded = true
+      end
       @current_thread = (@current_thread + 1) % @num_threads
       thread = @threads[@current_thread]
       thread.members.each do |sym|
@@ -377,8 +385,13 @@ module Biopsy
     # check termination conditions 
     # and return true if met
     def finished?
+      return false if @threads.first.recent_scores.size < @jump_cutoff
       scores = @threads.map { |t| t.recent_scores }
-      scores.map { |s| s.mean }.uniq.length == 1
+      finished = scores.map { |s| s.mean }.uniq.length == 1
+      if finished
+        puts "iterations: #{@threads.map { |t| t.tabu.size }.sum}"
+      end
+      finished
     end
 
     # True if this algorithm chooses its own starting point

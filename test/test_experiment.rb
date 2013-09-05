@@ -68,7 +68,7 @@ class TestExperiment < Test::Unit::TestCase
     end
 
     should "return an optimal set of parameters and score when run" do
-      Kernel.srand 123
+      # Kernel.srand 123
       e = Biopsy::Experiment.new('test_target', 'test_domain')
       known_best = {
         :a => 4,
