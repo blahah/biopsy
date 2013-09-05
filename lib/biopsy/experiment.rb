@@ -28,6 +28,8 @@ module Biopsy
       @objective = ObjectiveHandler.new(@domain, @target)
       self.select_algorithm
       self.select_starting_point
+      @scores = {}
+      @iteration_count = 0
     end
 
     # return the set of parameters to evaluate first
@@ -72,6 +74,7 @@ module Biopsy
         # have we finished?
         in_progress = !@algorithm.finished?
       end
+      puts "found optimum score: #{@best[:score]} for parameters #{@best[:parameters]} in #{@iteration_count} iterations."
       return @best
     end
 
@@ -82,7 +85,15 @@ module Biopsy
       # run the target
       run_data = @target.run @current_params
       # evaluate with objectives
-      result = @objective.run_for_output run_data
+      param_key = @current_params.to_s
+      result = nil
+      if @scores.has_key? param_key
+        result = @scores[param_key]
+      else
+        result = @objective.run_for_output run_data
+        @iteration_count += 1
+      end
+      @scores[@current_params.to_s] = result
       # get next steps from optimiser
       @current_params = @algorithm.run_one_iteration(@current_params, result)
     end

@@ -387,11 +387,7 @@ module Biopsy
     def finished?
       return false if @threads.first.recent_scores.size < @jump_cutoff
       scores = @threads.map { |t| t.recent_scores }
-      finished = scores.map { |s| s.mean }.uniq.length == 1
-      if finished
-        puts "iterations: #{@threads.map { |t| t.tabu.size }.sum}"
-      end
-      finished
+      scores.map { |s| s.mean }.uniq.length == 1
     end
 
     # True if this algorithm chooses its own starting point
