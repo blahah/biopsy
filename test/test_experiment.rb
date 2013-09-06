@@ -69,14 +69,12 @@ class TestExperiment < Test::Unit::TestCase
 
     should "return an optimal set of parameters and score when run" do
       # Kernel.srand 123
-      e = Biopsy::Experiment.new('test_target', 'test_domain')
-      known_best = {
-        :a => 4,
-        :b => 4,
-        :c => 4
-      }
-      best_found = e.run[:parameters]
-      assert_equal known_best, best_found
+      Dir.chdir @h.tmp_dir do
+        e = Biopsy::Experiment.new('test_target', 'test_domain')
+        known_best = -4
+        best_found = e.run[:score]
+        assert known_best < best_found
+      end
     end
 
   end # Experiment context

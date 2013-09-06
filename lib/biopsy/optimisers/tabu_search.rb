@@ -201,8 +201,10 @@ module Biopsy
       @backtracks = 1.0
 
       # convergence
-      @num_threads = 2
+      @num_threads = 5
       @threads = []
+      @convergence_alpha = 0.05
+      @global_best = {:parameters => nil, :score => nil}
 
     end # initialize
 
@@ -249,6 +251,8 @@ module Biopsy
         thread.loaded = false
       end
       @current_thread = @num_threads - 2
+      # adjust the alpha for multiple testing in convergence
+      @adjusted_alpha = @convergence_alpha / @num_threads
     end
 
     def load_next_thread
@@ -276,6 +280,13 @@ module Biopsy
       else
         @iterations_since_best += 1
       end
+      if @global_best[:score].nil? || @best[:score] > @global_best[:score]
+        @global_best = @best.clone
+      end
+    end
+
+    def best
+      @global_best
     end
 
     # use probability distributions to define the
@@ -385,9 +396,26 @@ module Biopsy
     # check termination conditions 
     # and return true if met
     def finished?
-      return false if @threads.first.recent_scores.size < @jump_cutoff
-      scores = @threads.map { |t| t.recent_scores }
-      scores.map { |s| s.mean }.uniq.length == 1
+      return false unless @threads.all? { |t| t.recent_scores.size == @jump_cutoff }
+      probabilities = self.recent_scores_combination_test
+      n_significant = 0
+      probabilities.each do |mann_u, levene| 
+        if mann_u <= @adjusted_alpha && levene <= @convergence_alpha
+          n_significant += 1 
+        end
+      end
+      finish = n_significant >= probabilities.size * 0.5
+    end
+
+    # returns a matrix of correlation probabilities for recent
+    # scores between all threads
+    def recent_scores_combination_test
+      combinations = 
+      @threads.map{ |t| t.recent_scores.to_scale }.combination(2).to_a
+      combinations.map do |a, b|
+        [Statsample::Test.u_mannwhitney(a, b).probability_exact,
+         Statsample::Test::Levene.new([a,b]).probability]
+      end
     end
 
     # True if this algorithm chooses its own starting point
