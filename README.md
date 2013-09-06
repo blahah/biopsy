@@ -46,4 +46,5 @@ Documentation is in development and will be released with the beta.
 
 ### Citation
 
-This is *pre-release*, *pre-publication* academic software. In lieu of a paper to cite, please cite this Github repo if your use of the software leads to a publication.
+This is *pre-release*, *pre-publication* academic software. In lieu of a paper to cite, please cite this Github repo and/or the [Figshare DOI (http://dx.doi.org/10.6084/m9.figshare.790660
+)](http://dx.doi.org/10.6084/m9.figshare.790660) if your use of the software leads to a publication.
