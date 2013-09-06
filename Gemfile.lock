@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    biopsy (0.0.0)
+    biopsy (0.1.0.alpha)
       rake (~> 10.1.0)
       rubystats
       statsample

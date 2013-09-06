@@ -7,7 +7,6 @@ module Biopsy
     PATCH = 0
     BUILD = 'alpha'
 
-    STRING = [MAJOR, MINOR, PATCH].compact.join('.')
-    STRING += "-#{BUILD}" if BUILD
+    STRING = [MAJOR, MINOR, PATCH, BUILD].compact.join('.')
   end
 end # Biopsy
