@@ -3,10 +3,11 @@
 module Biopsy
   module VERSION
     MAJOR = 0
-    MINOR = 0
+    MINOR = 1
     PATCH = 0
-    BUILD = nil
+    BUILD = 'alpha'
 
-    STRING = [MAJOR, MINOR, PATCH, BUILD].compact.join('.');
+    STRING = [MAJOR, MINOR, PATCH].compact.join('.')
+    STRING += "-#{BUILD}" if BUILD
   end
-end # DataStructures
+end # Biopsy
