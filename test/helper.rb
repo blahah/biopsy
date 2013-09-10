@@ -56,8 +56,8 @@ class Helper
       },
       :parameter_ranges => {
         :a => (-40..40).step(2).to_a,
-        :b => (0..100).step(2).to_a,
-        :c => (-50..50).to_a
+        :b => (0..40).step(2).to_a,
+        :c => (-20..20).to_a
       },
       :constructor_path => 'test_constructor.rb'
     }
