@@ -32,6 +32,7 @@ class Hash
     target = dup    
     target.inject({}) do |memo, (key, value)|
       value = value.deep_symbolize if value.is_a?(Hash)
+      value = value.map{ |x| x.is_a?(Hash) ? x.deep_symbolize : x } if value.is_a?(Array)
       memo[(key.to_sym rescue key) || key] = value
       memo
     end
