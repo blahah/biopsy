@@ -1,5 +1,4 @@
-# todo: ensure testing accounts for situation where there are multiple
-# input or output files defined in the spec
+  # input or output files defined in the spec
 module Biopsy
 
   class DomainLoadError < Exception
@@ -64,15 +63,15 @@ module Biopsy
     def target_valid? target
       l = []
       @input_filetypes.each do |input|
-        l << [target[:input_files], input]
+        l << [target[:input_files], input, 'input']
       end
       @output_filetypes.each do |output|
-        l << [target[:output_files], output]
+        l << [target[:output_files], output, 'output']
       end
       errors = []
-      l.each do |pair|
-        testcase, definition = pair
-        errors += self.validate_target_filetypes(testcase, definition)
+      l.each do |triplet|
+        testcase, definition, type = triplet
+        errors += self.validate_target_filetypes(testcase, definition, type)
       end
       errors
     end
@@ -80,33 +79,41 @@ module Biopsy
     # Returns an empty array if +:testcase+ conforms to definition,
     # otherwise returns an array of strings describing the
     # errors found.
-    def validate_target_filetypes testcase, definition
+    def validate_target_filetypes testcase, definition, type
       errors = []
       # check extensions
-      testcase.each_pair do |key, f|
-        ext = File.extname(f)
-        unless definition[:allowed_extensions].include? ext
-          errors << %Q{input file #{f} doesn't match any of the filetypes
-                       allowed for this domain}
+      if definition.has_key? :allowed_extensions
+        testcase.each_pair do |key, f|
+          ext = File.extname(f)
+          found = false
+          definition[:allowed_extensions].each do |x|
+            if x.downcase == ext.downcase || f.downcase == ext.downcase
+              found = true 
+            end
+          end
+          unless found
+            errors << %Q{#{type} file #{f} doesn't match any of the filetypes
+                         allowed for this domain (#{definition[:allowed_extensions]})}
+          end
         end
       end
       # check number of files
       in_count = testcase.size
       if definition.has_key? :n
         unless in_count == definition[:n]
-          errors << %Q{the number of input files (#{in_count}) doesn't 
+          errors << %Q{the number of #{type} files (#{in_count}) doesn't 
                       match the domain specification (#{definition[:n]})}
         end
       end
       if definition.has_key? :min
         unless in_count >= definition[:min]
-          errors << %Q{the number of input files (#{in_count}) is lower 
+          errors << %Q{the number of #{type} files (#{in_count}) is lower 
                       than the minimum for this domain (#{definition[:n]})}
         end
       end
       if definition.has_key? :max
         unless in_count >= definition[:max]
-          errors << %Q{the number of input files (#{in_count}) is greater 
+          errors << %Q{the number of #{type} files (#{in_count}) is greater 
                       than the maximum for this domain (#{definition[:n]})}
         end
       end
