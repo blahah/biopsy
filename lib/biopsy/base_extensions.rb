@@ -32,6 +32,7 @@ class Hash
     target = dup    
     target.inject({}) do |memo, (key, value)|
       value = value.deep_symbolize if value.is_a?(Hash)
+      value = value.map{ |x| x.is_a?(Hash) ? x.deep_symbolize : x } if value.is_a?(Array)
       memo[(key.to_sym rescue key) || key] = value
       memo
     end
@@ -54,11 +55,7 @@ class Array
   # Requires the array to contain only objects of class Fixnum.
   # If any other class is encountered, an error will be raised.
   def mean
-    self.sum / self.size.to_f
-  end
-
-  def sum
-    self.inject(0, :+)
+    self.inject(0, :+) / self.size.to_f
   end
 
 end # Array
