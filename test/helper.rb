@@ -11,9 +11,10 @@ require 'test/unit'
 begin; require 'turn/autorun'; rescue LoadError; end
 require 'shoulda-context'
 require 'biopsy'
+require 'yaml'
 
 Turn.config.format = :pretty
-Turn.config.trace = 10
+Turn.config.trace = 5
 
 Biopsy::Settings.instance.set_defaults
 
@@ -24,8 +25,6 @@ class Helper
 
   attr_reader :tmp_dir
   attr_reader :target_dir
-  attr_reader :domain_dir
-  attr_reader :domain_path
   attr_reader :target_path
   attr_reader :objective_dir
   attr_reader :objective_path
@@ -48,18 +47,32 @@ class Helper
   # Return a hash of valid target data
   def target_data
     {
-      :input_files => {
-        :in => 'input.txt'
+      :name => 'target_test',
+      :output => {
+        :onlyfile => 'output.txt'
       },
-      :output_files => {
-        :params => 'output.txt'
+      :parameters => {
+        :a => {
+          type: 'integer',
+          opt: true,
+          min: -40,
+          max: 40,
+          step: 2
+        },
+        :b => {
+          type: 'integer',
+          opt: true,
+          min: 0,
+          max: 40,
+          step: 2
+        },
+        :c => {
+          type: 'integer',
+          opt: true,
+          min: -20,
+          max: 20
+        }
       },
-      :parameter_ranges => {
-        :a => (-40..40).step(2).to_a,
-        :b => (0..40).step(2).to_a,
-        :c => (-20..20).to_a
-      },
-      :constructor_path => 'test_constructor.rb'
     }
   end
 
@@ -73,12 +86,15 @@ class Helper
   # Create a valid target definition in the target dir
   def create_valid_target
     data = self.target_data
-    name = 'test_target'
+    name = 'target_test'
     @target_path = File.join(@target_dir, name + '.yml')
     self.yaml_dump data, @target_path
-    File.open(File.join(@target_dir, data[:constructor_path]), 'w') do |f|
+    File.open(File.join(@target_dir, name + '.rb'), 'w') do |f|
       f.puts %Q{
-class TestConstructor
+class TargetTest
+
+  def initialize
+  end
 
   require 'yaml'
 
@@ -86,51 +102,12 @@ class TestConstructor
     File.open('output.txt', 'w') do |f|
       f.puts(params.to_yaml)
     end
-    { :params => File.expand_path('output.txt') }
+    nil
   end
 
 end
       }
     end
-    name
-  end
-
-  # Return a hash of valid domain data
-  def domain_data
-    {
-      :input_filetypes => [
-        {
-          :n => 1,
-          :allowed_extensions => [
-            '.txt'
-          ]
-        }
-      ],
-      :output_filetypes => [
-        {
-          :n => 1,
-          :allowed_extensions => [
-            '.txt'
-          ]
-        }
-      ],
-      :objectives => [
-        'test1', 'test2'
-      ]
-    }
-  end
-
-  def setup_domain
-    @domain_dir = File.join(@tmp_dir, 'domains')
-    Dir.mkdir @domain_dir
-    Biopsy::Settings.instance.domain_dir = [@domain_dir]
-  end
-
-  def create_valid_domain
-    data = domain_data
-    name = 'test_domain'
-    @domain_path = File.join(@domain_dir, name + '.yml')
-    self.yaml_dump data, @domain_path
     name
   end
 
@@ -152,8 +129,8 @@ class TestObjective < Biopsy::ObjectiveFunction
     @weighting = 1
   end
 
-  def run(input, threads)
-    file = input[:params]
+  def run(raw_output, output_files, threads)
+    file = output_files[:onlyfile].first
     input = YAML::load_file(file)
     a = input[:a].to_i
     b = input[:b].to_i
