@@ -1,7 +1,6 @@
 require "biopsy/version"
 require "biopsy/base_extensions"
 require "biopsy/settings"
-require "biopsy/domain"
 require "biopsy/experiment"
 require "biopsy/target"
 require "biopsy/objective_handler"

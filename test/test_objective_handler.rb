@@ -8,20 +8,15 @@ class TestObjectiveHandler < Test::Unit::TestCase
       @h = Helper.new
       @h.setup_tmp_dir
 
-      # we need a domain
-      @h.setup_domain
-      domain_name = @h.create_valid_domain
-      @domain = Biopsy::Domain.new domain_name
-
       # and a target
       @h.setup_target
       target_name = @h.create_valid_target
-      @target = Biopsy::Target.new @domain
+      @target = Biopsy::Target.new
       @target.load_by_name target_name
       
       # and an objective
       @h.setup_objective
-      objective_name = @h.create_valid_objective
+      @h.create_valid_objective
     end
 
     teardown do
@@ -29,7 +24,7 @@ class TestObjectiveHandler < Test::Unit::TestCase
     end
 
     should "return loaded objectives on init" do
-      oh = Biopsy::ObjectiveHandler.new @domain, @target
+      oh = Biopsy::ObjectiveHandler.new @target
       refute oh.objectives.empty?
     end
 
@@ -49,13 +44,13 @@ class TestObjectiveHandler < Test::Unit::TestCase
           f.puts 'another_objective'
         end
       end
-      oh = Biopsy::ObjectiveHandler.new @domain, @target
+      oh = Biopsy::ObjectiveHandler.new @target
       assert_equal 1, oh.objectives.length
       assert_equal 'AnotherObjective', oh.objectives.keys.first
     end
 
     should "run an objective and return the result" do
-      oh = Biopsy::ObjectiveHandler.new @domain, @target
+      oh = Biopsy::ObjectiveHandler.new @target
       values = {
         :a => 4,
         :b => 4,
@@ -65,12 +60,14 @@ class TestObjectiveHandler < Test::Unit::TestCase
       File.open(file, 'w') do |f|
         f.puts values.to_yaml
       end
-      result = oh.run_for_output({:params => file}, 0, 1, allresults=true)
-      assert_equal 0, result[:results]["TestObjective"][:result]
+      Dir.chdir(@h.tmp_dir) do
+        result = oh.run_for_output(nil, {:onlyfile => file})
+        assert_equal 0, result
+      end
     end
 
     should "perform euclidean distance dimension reduction" do
-      oh = Biopsy::ObjectiveHandler.new @domain, @target
+      oh = Biopsy::ObjectiveHandler.new @target
       results = {
         :a => {
           :optimum => 100,

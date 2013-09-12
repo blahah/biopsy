@@ -42,8 +42,12 @@ module Biopsy
       end
     end
 
+    def setup *args
+      nil 
+    end
+
     # return the next parameter set to evaluate
-    def run_one_iteration(*args)
+    def run_one_iteration *args
       @combinations.pop
     rescue
       nil
@@ -62,5 +66,14 @@ module Biopsy
         generate_combinations(index + 1, opts)
       end
     end
+
+    def knows_starting_point?
+      true
+    end
+
+    def select_starting_point
+      self.run_one_iteration
+    end
+
   end
 end

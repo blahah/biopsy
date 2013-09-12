@@ -10,15 +10,10 @@ class TestTarget < Test::Unit::TestCase
       @h = Helper.new
       @h.setup_tmp_dir
 
-      # we need a domain
-      @h.setup_domain
-      domain_name = @h.create_valid_domain
-      @domain = Biopsy::Domain.new domain_name
-
       # and a target
       @h.setup_target
       target_name = @h.create_valid_target
-      @target = Biopsy::Target.new @domain
+      @target = Biopsy::Target.new
       @target.load_by_name target_name
     end
 
@@ -36,7 +31,9 @@ class TestTarget < Test::Unit::TestCase
     end
 
     should "fail to find a non-existent definition" do
-      assert_equal nil, @target.locate_definition('not_real')
+      assert_raise Biopsy::TargetLoadError do
+        @target.locate_definition('not_real')
+      end
     end
 
     should "reject any invalid config" do
@@ -57,17 +54,29 @@ class TestTarget < Test::Unit::TestCase
       end
     end
 
-    should "reject a config that doesn't match the domain spec" do
-      d = @h.target_data
-      d[:input_files][:fake] = 'another.file'
-      assert @target.validate_config(d).length > 0
-    end
-
     should "be able to store a loaded config file" do
       config = YAML::load_file(@h.target_path).deep_symbolize
       @target.store_config config
       @h.target_data.each_pair do |key, value|
-        assert_equal value, @target.instance_variable_get('@' + key.to_s)
+        if key == :parameters
+          parsed = {}
+          value.each_pair do |param, spec|
+            if spec[:min] && spec[:max]
+              r = (spec[:min]..spec[:max])
+              r = spec[:step] ? r.step(spec[:step]) : r
+              parsed[param] = r.to_a
+            elsif spec[:values]
+              parsed[param] = spec[:values]
+            else
+              assert false, "parameter #{param} with spec #{spec} has no range or values"
+            end
+          end
+          parsed.each_pair do |param, spec|
+            assert_equal spec, @target.parameters[param]
+          end
+        else
+          assert_equal value, @target.instance_variable_get('@' + key.to_s)
+        end
       end
     end
 
@@ -77,11 +86,11 @@ class TestTarget < Test::Unit::TestCase
 
       assert !@target.check_constructor, "missing constructor is invalid"
 
-      File.open(@h.target_data[:constructor_path], 'w') do |f|
+      File.open(@target.constructor_path, 'w') do |f|
         f.puts '[x**2 for x in range(10)]' # python :)
       end
       assert !@target.check_constructor, "invalid ruby is invalid"
-      File.delete @h.target_data[:constructor_path]
+      File.delete @target.constructor_path
     end
 
   end # Target context

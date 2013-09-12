@@ -39,10 +39,8 @@ module Biopsy
     attr_reader :last_tempdir
     attr_accessor :objectives
 
-    def initialize domain, target
-      @domain = domain
+    def initialize target
       @target = target
-      base_dir = Settings.instance.base_dir
       @objectives_dir = Settings.instance.objectives_dir.first
       @objectives = {}
       $LOAD_PATH.unshift(@objectives_dir)
@@ -76,12 +74,14 @@ module Biopsy
 
     # Run a specific +:objective+ on the +:output+ of a target
     # with max +:threads+.
-    def run_objective(objective, name, output, threads)
+    def run_objective(objective, name, raw_output, output_files, threads)
       begin
-        # output is a hash containing the file(s) output
-        # by the target in the format expected by the
-        # objective function(s).
-        return objective.run(output, threads)
+        # output is a, array: [raw_output, output_files].
+        # output_files is a hash containing the absolute paths
+        # to file(s) output by the target in the format expected by the
+        # objective function(s), with keys as the keys expected by the
+        # objective function
+        return objective.run(raw_output, output_files, threads)
       rescue NotImplementedError => e
         puts "Error: objective function #{objective.class} does not implement the run() method"
         puts "Please refer to the documentation for instructions on adding objective functions"
@@ -90,7 +90,6 @@ module Biopsy
     end
 
     # Perform a euclidean distance dimension reduction of multiple objectives
-    # using weighting specified in the domain definition.
     def dimension_reduce(results)
       # calculate the weighted Euclidean distance from optimal
       # d(p, q) = \sqrt{(p_1 - q_1)^2 + (p_2 - q_2)^2+...+(p_i - q_i)^2+...+(p_n - q_n)^2}
@@ -107,40 +106,26 @@ module Biopsy
     end
 
     # Run all objectives functions for +:output+. 
-    def run_for_output(output, threads=6, cleanup=true, allresults=false)
+    def run_for_output(raw_output, threads=6, allresults=false)
       # check output files exist
-      @target.output_files.each_pair do |key, name|
-        unless File.exists?(output[key]) && File.size(output[key]) > 0
-          info("file #{output[key]} does not exist or is empty")
+      output_files = {}
+      @target.output.each_pair do |key, glob|
+        files = Dir[glob]
+        zerosize = files.reduce(false) { |empty, f| File.size(f) == 0 }
+        if files.empty? || zerosize
+          puts Dir.pwd
+          raise ObjectiveHandlerError.new "output files for #{key} matching #{glob} do not exist or are empty"
           return nil
         end
+        output_files[key] = files.map { |f| File.expand_path(f) }
       end
+
       # run all objectives for output
       results = {}
-      # create temp dir
-      Dir.chdir(self.create_tempdir) do
-        @objectives.each_pair do |name, objective|
-          results[name] = self.run_objective(objective, name, output, threads)
-        end
-        if cleanup == 1
-          # remove all but essential files
-          essential_files = @domain.keep_intermediates
-          if essential_files
-            @objectives.values.each{ |objective| essential_files += objective.essential_files }
-          end
-          Dir["*"].each do |file|
-            next if File.directory? file
-            if essential_files && essential_files.include?(file)
-              `gzip #{file}` if @domain.gzip_intermediates
-              FileUtils.mv("#{file}.gz", '..')
-            end
-          end
-        end
+      @objectives.each_pair do |name, objective|
+        results[name] = self.run_objective(objective, name, raw_output, output_files, threads)
       end
-      if cleanup
-        # clean up temp dir
-        FileUtils.rm_rf @last_tempdir
-      end
+
       if allresults
         return {:results => results,
                 :reduced => self.dimension_reduce(results)}
@@ -149,20 +134,6 @@ module Biopsy
           return value[:result]
         end
       end
-    end
-
-    # create a guaranteed random temporary directory for storing outputs
-    # return the dirname
-    def create_tempdir
-      token = loop do
-        # generate random dirnames until we find one that
-        # doesn't exist
-        test_token = SecureRandom.hex
-        break test_token unless File.exists? test_token
-      end
-      Dir.mkdir(token)
-      @last_tempdir = token
-      return token
     end
 
   end
