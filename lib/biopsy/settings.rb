@@ -25,11 +25,11 @@ module Biopsy
 
     attr_accessor :base_dir
     attr_accessor :target_dir
-    attr_accessor :domain_dir
-    attr_accessor :domain
     attr_accessor :objectives_dir
     attr_accessor :objectives_subset
     attr_accessor :sweep_cutoff
+    attr_accessor :keep_intermediates
+    attr_accessor :gzip_intermediates
 
     def initialize
       self.set_defaults
@@ -40,11 +40,11 @@ module Biopsy
       @config_file = '~/.biopsyrc'
       @base_dir = ['.']
       @target_dir = ['targets']
-      @domain_dir = ['domains']
-      @domain = 'test_domain'
       @objectives_dir = ['objectives']
       @objectives_subset = nil
       @sweep_cutoff = 100
+      @keep_intermediates = false
+      @gzip_intermediates = false
     end
 
     # Loads settings from a YAML config file. If no file is
@@ -84,25 +84,6 @@ module Biopsy
     # Returns a YAML string representation of the settings
     def to_s
       all_settings.to_yaml
-    end
-
-    # Locate the first YAML config file whose name
-    # excluding extension matches +:name+ (case insensitive)
-    # in dirs listed by the +:dir_key+ setting.
-    def locate_config(dir_key, name)
-      dir_key = "@#{dir_key.to_s}".to_sym
-      unless self.instance_variables.include? dir_key
-        raise SettingsError.new "no setting found for compulsory key #{dir_key}"
-      end
-      self.instance_variable_get(dir_key).each do |dir|
-        Dir.chdir ::File.expand_path(dir) do
-          Dir[name + '.yml'].each do |file|
-            return ::File.expand_path(file) if ::File.basename(file, '.yml').downcase == name.downcase
-          end
-        end
-      end
-
-      nil
     end
 
   end # Settings

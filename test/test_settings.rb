@@ -6,8 +6,7 @@ class TestSettings < Test::Unit::TestCase
 
     setup do
       @data = {
-        :domain => 'test_domain',
-        :objectives_dir => './objectives',
+        :objectives_dir => './objectives'
       }
       @config_file = File.expand_path 'testconfig.yml'
       @settings = Biopsy::Settings.instance
@@ -22,7 +21,6 @@ class TestSettings < Test::Unit::TestCase
     end
 
     should "load the specified config file" do
-      assert @settings.domain == @data[:domain]
       assert @settings.objectives_dir == @data[:objectives_dir]
     end
 
@@ -50,22 +48,15 @@ class TestSettings < Test::Unit::TestCase
     end
 
     should "make loaded settings available as methods" do
-      assert @settings.domain == @data[:domain], 'domain key not loaded as method'
       assert @settings.objectives_dir == @data[:objectives_dir], 'objectives_dir key not loaded as method'
     end
 
     should "produce a YAML string representation" do
       s = @settings.to_s
       h = YAML.load(s)
-      @data.each_pair do |key, value|
+      h.each_pair do |key, value|
         varname = "@#{key.to_s}".to_sym
         assert_equal value, @settings.instance_variable_get(varname)
-      end
-    end
-
-    should "error when a non-existent config is requested" do
-      assert_raise Biopsy::SettingsError do
-        @settings.locate_config :fake_key, 'blah'
       end
     end
 

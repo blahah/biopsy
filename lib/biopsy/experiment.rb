@@ -19,13 +19,12 @@ module Biopsy
     attr_reader :inputs, :outputs, :retain_intermediates, :target, :start, :algorithm
 
     # Returns a new Experiment
-    def initialize(target_name, domain_name, start=nil, algorithm=nil)
-      @domain = Domain.new domain_name
+    def initialize(target_name, start=nil, algorithm=nil)
       @start = start
       @algorithm = algorithm
 
       self.load_target target_name
-      @objective = ObjectiveHandler.new(@domain, @target)
+      @objective = ObjectiveHandler.new @target
       self.select_algorithm
       self.select_starting_point
       @scores = {}
@@ -44,19 +43,23 @@ module Biopsy
 
     # Return a random set of parameters from the parameter space.
     def random_start_point
-      Hash[@target.parameter_ranges.map { |p, r| [p, r.sample] }] 
+      Hash[@target.parameters.map { |p, r| [p, r.sample] }] 
     end
 
     # select the optimisation algorithm to use
     def select_algorithm
-      @algorithm = ParameterSweeper.new(@target.parameter_ranges)
-      return if @algorithm.combinations.size < Settings.instance.sweep_cutoff
-      @algorithm = TabuSearch.new(@target.parameter_ranges)
+      max = Settings.instance.sweep_cutoff
+      n = @target.count_parameter_permutations
+      if n < max
+        @algorithm = ParameterSweeper.new(@target.parameters)
+      else
+        @algorithm = TabuSearch.new(@target.parameters)
+      end
     end
 
     # load the target named +:target_name+
     def load_target target_name
-      @target = Target.new @domain
+      @target = Target.new
       @target.load_by_name target_name
     end
 
@@ -82,20 +85,54 @@ module Biopsy
     # encompassing the program, objective(s) and optimiser.
     # Returns the output of the optimiser.
     def run_iteration
-      # run the target
-      run_data = @target.run @current_params
-      # evaluate with objectives
-      param_key = @current_params.to_s
-      result = nil
-      if @scores.has_key? param_key
-        result = @scores[param_key]
-      else
-        result = @objective.run_for_output run_data
-        @iteration_count += 1
+      # create temp dir
+        Dir.chdir(self.create_tempdir) do
+        # run the target
+        raw_output = @target.run @current_params
+        # evaluate with objectives
+        param_key = @current_params.to_s
+        result = nil
+        if @scores.has_key? param_key
+          result = @scores[param_key]
+        else
+          result = @objective.run_for_output raw_output
+          @iteration_count += 1
+        end
+        @scores[@current_params.to_s] = result
+        # get next steps from optimiser
+        @current_params = @algorithm.run_one_iteration(@current_params, result)
       end
-      @scores[@current_params.to_s] = result
-      # get next steps from optimiser
-      @current_params = @algorithm.run_one_iteration(@current_params, result)
+      self.cleanup
+    end
+
+    def cleanup
+      # TODO: make this work
+      # remove all but essential files
+      if Settings.instance.keep_intermediates
+        @objectives.values.each{ |objective| essential_files += objective.essential_files }
+      end
+      Dir["*"].each do |file|
+        next if File.directory? file
+        if essential_files && essential_files.include?(file)
+          `gzip #{file}` if Settings.instance.gzip_intermediates
+          FileUtils.mv("#{file}.gz", '../output')
+        end
+      end
+      FileUtils.rm_rf @last_tempdir
+    end
+
+    # create a guaranteed random temporary directory for storing outputs
+    # return the dirname
+    def create_tempdir
+      token = loop do
+        # generate random dirnames until we find one that
+        # doesn't exist
+        test_token = SecureRandom.hex
+        break test_token unless File.exists? test_token
+      end
+      Dir.mkdir(token)
+      @last_tempdir = token
+      return token
     end
 
   end # end of class RunHandler
