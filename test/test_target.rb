@@ -84,12 +84,12 @@ class TestTarget < Test::Unit::TestCase
       config = YAML::load_file(@h.target_path).deep_symbolize
       @target.store_config config
 
-      assert !@target.check_constructor, "missing constructor is invalid"
+      assert !@target.check_constructor('target_test'), "missing constructor is invalid"
 
       File.open(@target.constructor_path, 'w') do |f|
         f.puts '[x**2 for x in range(10)]' # python :)
       end
-      assert !@target.check_constructor, "invalid ruby is invalid"
+      assert !@target.check_constructor('target_test'), "invalid ruby is invalid"
       File.delete @target.constructor_path
     end
 
