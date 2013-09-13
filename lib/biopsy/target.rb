@@ -96,7 +96,6 @@ module Biopsy
     def generate_parameters params
       @parameters = {}
       @options = {}
-      pp params
       params.each_pair do |param, data|
         if data[:opt]
           # optimise this parameter
