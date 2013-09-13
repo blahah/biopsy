@@ -19,6 +19,7 @@ module Biopsy
       raise TargetLoadError.new("Target definition file does not exist for #{name}") if path.nil?
       config = YAML::load_file(path)
       raise TargetLoadError.new("Target definition file #{path} is not valid YAML") if config.nil?
+      config = config.deep_symbolize
       self.store_config config
       self.check_constructor
       self.load_constructor
@@ -60,14 +61,14 @@ module Biopsy
           return File.expand_path(name) if File.exists? name
         end
       end
-      raise TargetLoadError.new("Coulnd't find constructor #{name}")
+      raise TargetLoadError.new("Couldn't find constructor #{name}")
       nil
     end
 
     # Validate the constructor. True if valid, false otherwise.
     def check_constructor
       @constructor_path = self.locate_file name + '.rb'
-      raise "constructor path is not defined for this target" if @constructor_path.nil?
+      raise TargetLoadError.new("constructor path is not defined for this target") if @constructor_path.nil?
       self.valid_ruby? @constructor_path
     end
 
