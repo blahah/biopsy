@@ -21,7 +21,7 @@ module Biopsy
       raise TargetLoadError.new("Target definition file #{path} is not valid YAML") if config.nil?
       config = config.deep_symbolize
       self.store_config config
-      self.check_constructor
+      self.check_constructor name
       self.load_constructor
     end
 
@@ -66,7 +66,7 @@ module Biopsy
     end
 
     # Validate the constructor. True if valid, false otherwise.
-    def check_constructor
+    def check_constructor name
       @constructor_path = self.locate_file name + '.rb'
       raise TargetLoadError.new("constructor path is not defined for this target") if @constructor_path.nil?
       self.valid_ruby? @constructor_path
@@ -96,6 +96,7 @@ module Biopsy
     def generate_parameters params
       @parameters = {}
       @options = {}
+      pp params
       params.each_pair do |param, data|
         if data[:opt]
           # optimise this parameter
