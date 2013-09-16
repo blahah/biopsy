@@ -61,7 +61,7 @@ module Biopsy
           return File.expand_path(name) if File.exists? name
         end
       end
-      raise TargetLoadError.new("Couldn't find constructor #{name}")
+      raise TargetLoadError.new("Couldn't find file #{name}")
       nil
     end
 
@@ -88,7 +88,7 @@ module Biopsy
     # true if file is valid ruby
     def valid_ruby? file
       return false unless ::File.exists? file
-      result = `ruby -c #{file} &> /dev/null`
+      result = `ruby -c #{file} > /dev/null 2>&1`
       !result.size.zero?
     end
 

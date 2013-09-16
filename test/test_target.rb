@@ -84,7 +84,9 @@ class TestTarget < Test::Unit::TestCase
       config = YAML::load_file(@h.target_path).deep_symbolize
       @target.store_config config
 
-      assert !@target.check_constructor('target_test'), "missing constructor is invalid"
+      assert_raise Biopsy::TargetLoadError do
+        @target.check_constructor('target_missing')
+      end
 
       File.open(@target.constructor_path, 'w') do |f|
         f.puts '[x**2 for x in range(10)]' # python :)
