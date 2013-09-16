@@ -7,6 +7,28 @@ Biopsy is a framework for optimising any program or pipeline which produces a me
 
 A simple example of the power of this approach is *de-novo* transcriptome assembly. Typically, the assembly process takes many GB of data as input, uses many GB of RAM and takes many hours to complete. This prevents researchers from performing full parameter sweeps, and they are therefore forced to use word-of-mouth and very basic optimisation to choose assembler settings. Assemblotron, which uses the Biopsy framework, can fully optimise any *de-novo* assembler to produce the optimal assembly possible given a particular input. This typically takes little more time than running a single assembly.
 
+## Installation
+
+Make sure you have Ruby installed, then:
+
+`gem install biopsy --pre`
+
+## Usage
+
+[]
+
+Detailed usage instructions are on the wiki. Here's a quick overview:
+
+1. Define your optimisation target. This is a program or pipeline you want to optimise, and you define it by filling in a template [YAML file](http://en.wikipedia.org/wiki/YAML). Easy!
+2. Define your objective function. This is a program that analyses the output of your program and gives it a score. You define it by writing a small amount of Ruby code. Don't worry - there's a template and detailed instructions on the wiki.
+3. Run Biopsy, and wait while the experiment runs.
+
+### Command line examples
+
+`biopsy list targets`
+`biopsy list objectives`
+`biposy run --target test_target --objective test_objective --input test_file.txt --time-limit 24h`
+
 ## Development status
 
 [![Gem Version](https://badge.fury.io/rb/biopsy.png)][gem]
