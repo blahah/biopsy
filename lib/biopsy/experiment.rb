@@ -25,7 +25,7 @@ module Biopsy
       if target.is_a? Target
         @target = target
       else
-        self.load_target target_name
+        self.load_target target
       end
       @objective = ObjectiveHandler.new @target
       self.select_algorithm
