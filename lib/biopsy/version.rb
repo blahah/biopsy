@@ -4,7 +4,7 @@ module Biopsy
   module VERSION
     MAJOR = 0
     MINOR = 1
-    PATCH = 4
+    PATCH = 5
     BUILD = 'alpha'
 
     STRING = [MAJOR, MINOR, PATCH, BUILD].compact.join('.')
