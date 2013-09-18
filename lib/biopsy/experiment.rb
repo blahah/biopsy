@@ -19,11 +19,14 @@ module Biopsy
     attr_reader :inputs, :outputs, :retain_intermediates, :target, :start, :algorithm
 
     # Returns a new Experiment
-    def initialize(target_name, start=nil, algorithm=nil)
+    def initialize(target, start=nil, algorithm=nil)
       @start = start
       @algorithm = algorithm
-
-      self.load_target target_name
+      if target.is_a? Target
+        @target = target
+      else
+        self.load_target target_name
+      end
       @objective = ObjectiveHandler.new @target
       self.select_algorithm
       self.select_starting_point
