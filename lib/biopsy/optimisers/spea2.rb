@@ -68,16 +68,16 @@ class Generation
 	def run_generation
 		@pop_and_archive = @population_array + @archive_array
 		@fitness_assignment.run(@pop_and_archive)
-		@archive_generation
+		@archive_generation.run(@pop_and_archive, 3)
 	end
 end # Generation
 
 class Individual
-	attr_reader :individual, :score, :fitness, :raw_fitness, :density, :distance_to_kth_point, :distance_to_origin
+	attr_reader :parameters, :score, :fitness, :raw_fitness, :density, :distance_to_kth_point, :distance_to_origin
 	attr_writer :fitness, :raw_fitness, :density, :distance_to_kth_point
 	def initialize(individual, fitness_assignment)
 		@fitness_assignment = fitness_assignment
-		@individual = individual[:parameters]
+		@parameters = individual[:parameters]
 		@score = individual[:score]
 		@distance_to_origin = fitness_assignment.distance_to_origin(@score)
 	end
@@ -167,25 +167,37 @@ end # FitnessAssignment
 
 class ArchiveGeneration
 	def run(generation, archive_size)
+		@generation = generation
+
+		archive = fill_archive(@generation)
+
+		if archive.length < archive_size
+			self.further_archive_selection
+		elsif archive.length > archive_size
+			self.archive_truncation(archive)
+		end
+
+	end
+	def fill_archive generation
 		archive = []
-		while true do
-			individual = generation.pop
+		@generation.clone.each do |individual|
 			if individual.fitness < 1
-				archive << individual
+				archive << individual 
+				@generation.delete(individual)
 			end
 		end
-		if archive.length < archive_size
-			self.further_archive_selection(archive)
-		elsif archive.length > archive_size
-			self.archive_truncation
-		end
+		return archive
 	end
-	
-	def archive_truncation
+	def archive_truncation archive
+
 	end
 	def further_archive_selection
+		pp @generation
+		# need to sort array of objects (@generation) by fitness which is a property of aforementioned objects
+		# for some reason the fitness attribute of the objects in @generation is not accessible in the way presented below
+		@generation.sort_by!{|a, b| a.fitness <=> b.fitness}
+		pp @generation
 	end
-end
 end # ArchiveGeneration
 class Tournament
 	def initialize
