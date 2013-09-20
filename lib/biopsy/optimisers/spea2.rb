@@ -75,8 +75,8 @@ class Generation
 end # Generation
 
 class Individual
-	attr_reader :individual, :score, :fitness, :raw_fitness, :density, :distance_to_origin
-	attr_writer :fitness, :raw_fitness, :density
+	attr_reader :individual, :score, :fitness, :raw_fitness, :density, :distance_to_kth_point, :distance_to_origin
+	attr_writer :fitness, :raw_fitness, :density, :distance_to_kth_point
 	def initialize(individual, environment)
 		@environment = environment
 		@individual = individual[:parameters]
@@ -101,10 +101,27 @@ class Environment
 		# coordinates is a hash of coordinates
 		return rand(coordinates)
 	end
+	def distance_between_points(individual_one, individual_two)
+		return (individual_one.score - individual_two.score)
+	end
 	def score_density generation
-		generation.each do |individual|
-			
+		generation_hash = map_points_distance(generation)
+		pp generation_hash
+	end
+	def map_points_distance generation
+		generation_hash = {}
+		generation_length = generation.length
+		(1..generation_length).each do |num|
+			generation_hash[num.to_s] = [generation.pop, {}]
 		end
+		generation_hash.each do |key, value|
+			(1..generation_length).each do |num|
+				next if key.to_i == num or generation_hash[key][1].has_key?(num.to_s)
+				generation_hash[key][1][num.to_s] = distance_between_points(generation_hash[key][0], generation_hash[num.to_s][0])
+				generation_hash[num.to_s][1][key] = distance_between_points(generation_hash[key][0], generation_hash[num.to_s][0])
+			end
+		end
+		return generation_hash
 	end
 	def score_raw_fitness generation
 		generation.sort! { |a, b| a.distance_to_origin <=> b.distance_to_origin }.reverse!
@@ -134,11 +151,9 @@ parameter_ranges = {
 arr = GeneticAlgorithm.new(parameter_ranges, 5)
 start_point = arr.select_starting_point
 arr.setup(start_point)
-pp arr.current
 next_params = arr.run_one_iteration(start_point, rand(100))
 (1..100).each do |num|
 	next_params = arr.run_one_iteration(next_params, rand(120))
-	pp arr.current
 end
 
 =begin
