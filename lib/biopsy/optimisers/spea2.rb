@@ -51,6 +51,7 @@ end # Algorithm
 class Generation
 	def initialize(population_size, archive_size)
 		@fitness_assignment = FitnessAssignment.new
+		@archive_generation = ArchiveGeneration.new
 		@population_size = population_size
 		@archive_size = archive_size
 		@population_array = []
@@ -66,7 +67,8 @@ class Generation
 
 	def run_generation
 		@pop_and_archive = @population_array + @archive_array
-		@fitness_assignment.score_fitness(@pop_and_archive)
+		@fitness_assignment.run(@pop_and_archive)
+		@archive_generation
 	end
 end # Generation
 
@@ -93,10 +95,9 @@ class Individual_t
 end
 
 class FitnessAssignment
-	def score_fitness generation
+	def run generation
 		self.score_raw_fitness(generation)
 		self.score_density(generation)
-
 		generation.each do |individual|
 			individual.fitness = individual.density + individual.raw_fitness
 		end
@@ -164,11 +165,28 @@ class FitnessAssignment
 	end
 end # FitnessAssignment
 
-class EnvironmentalSelection
-	def initialize
+class ArchiveGeneration
+	def run(generation, archive_size)
+		archive = []
+		while true do
+			individual = generation.pop
+			if individual.fitness < 1
+				archive << individual
+			end
+		end
+		if archive.length < archive_size
+			self.further_archive_selection(archive)
+		elsif archive.length > archive_size
+			self.archive_truncation
+		end
 	end
-
-end # EnvironmentalSelection
+	
+	def archive_truncation
+	end
+	def further_archive_selection
+	end
+end
+end # ArchiveGeneration
 class Tournament
 	def initialize
 	end
