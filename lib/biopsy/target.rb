@@ -1,3 +1,5 @@
+
+
 module Biopsy
 
   class TargetLoadError < Exception
@@ -11,6 +13,7 @@ module Biopsy
     attr_accessor :options
     attr_accessor :output
     attr_accessor :name
+    attr_accessor :shortname
     attr_reader :constructor_path
 
     # load target with +name+.
@@ -113,7 +116,7 @@ module Biopsy
           end
         else
           # present option to user
-
+          @options[param] = data
         end
       end
     end

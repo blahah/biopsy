@@ -19,11 +19,15 @@ module Biopsy
     attr_reader :inputs, :outputs, :retain_intermediates, :target, :start, :algorithm
 
     # Returns a new Experiment
-    def initialize(target_name, start=nil, algorithm=nil)
+    def initialize(target, options={}, start=nil, algorithm=nil)
       @start = start
       @algorithm = algorithm
-
-      self.load_target target_name
+      if target.is_a? Target
+        @target = target
+      else
+        self.load_target target
+      end
+      @options = options
       @objective = ObjectiveHandler.new @target
       self.select_algorithm
       self.select_starting_point
@@ -88,7 +92,7 @@ module Biopsy
       # create temp dir
         Dir.chdir(self.create_tempdir) do
         # run the target
-        raw_output = @target.run @current_params
+        raw_output = @target.run @current_params.merge(@options)
         # evaluate with objectives
         param_key = @current_params.to_s
         result = nil
