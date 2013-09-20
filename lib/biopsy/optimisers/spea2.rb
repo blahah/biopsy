@@ -50,14 +50,14 @@ end # Algorithm
 
 class Generation
 	def initialize(population_size, archive_size)
-		@environment = Environment.new
+		@fitness_assignment = FitnessAssignment.new
 		@population_size = population_size
 		@archive_size = archive_size
 		@population_array = []
 		@archive_array = []
 	end
 	def add_new_individual individual
-		@population_array << Individual.new(individual, @environment)
+		@population_array << Individual.new(individual, @fitness_assignment)
 		# run generation
 		if @population_array.length == @population_size
 			self.run_generation	
@@ -65,23 +65,19 @@ class Generation
 	end
 
 	def run_generation
-		puts "reached pop size"
 		@pop_and_archive = @population_array + @archive_array
-		@environment.score_raw_fitness(@pop_and_archive)
-
-		@environment.score_density(@pop_and_archive)
-		abort('run_generation method')
+		@fitness_assignment.score_fitness(@pop_and_archive)
 	end
 end # Generation
 
 class Individual
 	attr_reader :individual, :score, :fitness, :raw_fitness, :density, :distance_to_kth_point, :distance_to_origin
 	attr_writer :fitness, :raw_fitness, :density, :distance_to_kth_point
-	def initialize(individual, environment)
-		@environment = environment
+	def initialize(individual, fitness_assignment)
+		@fitness_assignment = fitness_assignment
 		@individual = individual[:parameters]
 		@score = individual[:score]
-		@distance_to_origin = environment.distance_to_origin(@score)
+		@distance_to_origin = fitness_assignment.distance_to_origin(@score)
 	end
 	# using Tournament class mate individual with another
 	def mate_with
@@ -96,23 +92,41 @@ class Individual_t
 	end
 end
 
-class Environment
+class FitnessAssignment
+	def score_fitness generation
+		self.score_raw_fitness(generation)
+		self.score_density(generation)
+
+		generation.each do |individual|
+			individual.fitness = individual.density + individual.raw_fitness
+		end
+	end
 	def distance_to_origin coordinates
 		# coordinates is a hash of coordinates
 		return rand(coordinates)
 	end
 	def distance_between_points(individual_one, individual_two)
-		return (individual_one.score - individual_two.score)
+		if (individual_one.score - individual_two.score) < 0
+			return (individual_one.score - individual_two.score)*-1
+		else
+			return (individual_one.score - individual_two.score)
+		end
 	end
 	def score_density generation
 		generation_hash = map_points_distance(generation)
-		pp generation_hash
+
+		find_distance_to_kth_point(generation_hash)
+
+		generation_hash.each do |key,value|
+			value[0].density = (1.to_f/(value[0].distance_to_kth_point+2))
+		end
 	end
 	def map_points_distance generation
+		generation_clone = generation.clone
 		generation_hash = {}
 		generation_length = generation.length
 		(1..generation_length).each do |num|
-			generation_hash[num.to_s] = [generation.pop, {}]
+			generation_hash[num.to_s] = [generation_clone.pop, {}]
 		end
 		generation_hash.each do |key, value|
 			(1..generation_length).each do |num|
@@ -126,7 +140,7 @@ class Environment
 	def score_raw_fitness generation
 		generation.sort! { |a, b| a.distance_to_origin <=> b.distance_to_origin }.reverse!
 		counter = 0
-		previous_distance = 9999
+		previous_distance = +1.0/0.0
 		generation.each do |individual|
 			if previous_distance > individual.distance_to_origin
 				individual.raw_fitness = counter
@@ -137,8 +151,24 @@ class Environment
 			counter += 1
 		end
 	end
-end # Environment
+	def find_distance_to_kth_point generation_hash
+		kth_point = Math.sqrt(generation_hash.length).round(0)
+		generation_hash.each do |key, value|
+			sorted_distances_array = value[1].sort_by {|k,v| v}
+			(1..sorted_distances_array.length).each do |num|
+				if num == (kth_point-1)
+					value[0].distance_to_kth_point = sorted_distances_array[num][1]
+				end
+			end
+		end
+	end
+end # FitnessAssignment
 
+class EnvironmentalSelection
+	def initialize
+	end
+
+end # EnvironmentalSelection
 class Tournament
 	def initialize
 	end
@@ -157,7 +187,7 @@ next_params = arr.run_one_iteration(start_point, rand(100))
 end
 
 =begin
-arr = Environment.new
+arr = FitnessAssignment.new
 generation = [Individual_t.new(20), Individual_t.new(18), Individual_t.new(18), Individual_t.new(15), Individual_t.new(10),]
 arr.score_raw_fitness(generation)
 =end
