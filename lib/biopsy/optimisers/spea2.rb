@@ -2,11 +2,13 @@ require 'csv'
 require 'pp'
 
 class GeneticAlgorithm
-	attr_reader :current
+	attr_reader :current, :probability_of_cross
+	attr_writer :probability_of_cross
 	def initialize(parameter_ranges, threads=8)
 		@ranges = parameter_ranges
 		@population_array = []
-		@generation_handler = Generation.new(5, 5)
+		probability_of_cross = 0.94
+		@generation_handler = Generation.new(20, 5, probability_of_cross, parameter_ranges)
 	end
 	def setup start_point
 		@current = {:parameters => start_point, :score => nil}
@@ -49,9 +51,10 @@ class GeneticAlgorithm
 end # Algorithm
 
 class Generation
-	def initialize(population_size, archive_size)
+	def initialize(population_size, archive_size, probability_of_cross, parameter_ranges)
 		@fitness_assignment = FitnessAssignment.new
 		@archive_generation = ArchiveGeneration.new
+		@mating_handler = MatingHandler(probability_of_cross, parameter_ranges)
 		@population_size = population_size
 		@archive_size = archive_size
 		@population_array = []
@@ -80,9 +83,6 @@ class Individual
 		@parameters = individual[:parameters]
 		@score = individual[:score]
 		@distance_to_origin = fitness_assignment.distance_to_origin(@score)
-	end
-	# using Tournament class mate individual with another
-	def mate_with
 	end
 end # Individual
 
@@ -168,11 +168,10 @@ end # FitnessAssignment
 class ArchiveGeneration
 	def run(generation, archive_size)
 		@generation = generation
-
 		archive = fill_archive(@generation)
 
 		if archive.length < archive_size
-			self.further_archive_selection
+			archive = self.further_archive_selection(archive, archive_size)
 		elsif archive.length > archive_size
 			self.archive_truncation(archive)
 		end
@@ -189,20 +188,79 @@ class ArchiveGeneration
 		return archive
 	end
 	def archive_truncation archive
-
 	end
-	def further_archive_selection
-		pp @generation
-		# need to sort array of objects (@generation) by fitness which is a property of aforementioned objects
-		# for some reason the fitness attribute of the objects in @generation is not accessible in the way presented below
-		@generation.sort_by!{|a, b| a.fitness <=> b.fitness}
-		pp @generation
+	def further_archive_selection archive, archive_size
+		@generation.sort!{|a, b| a.fitness <=> b.fitness}
+		@generation.clone.each do |individual|
+			if archive.length < archive_size
+				archive << individual 
+				@generation.delete(individual)
+			else
+				break
+			end
+		end
 	end
 end # ArchiveGeneration
-class Tournament
-	def initialize
+
+class MatingHandler
+	def initialize(probablility_of_cross, parameter_ranges)
+		@probablility_of_cross = probablility_of_cross
+		@parameter_ranges = parameter_ranges
 	end
-end # Tournament
+	def run generation
+
+	end
+	def binary_tournament(individual_one, individual_two)
+		individual_one = rand(generation.size)
+		individual_two = rand(generation.size)
+		individual_two = rand(generation.size) while individual_one == individual_two
+		if individual_one.fitness > individual_two.fitness
+			return individual_one
+		else
+			return individual_two
+		end
+	end
+	def reproduce selected_to_mate
+		# loop through selected
+		# mate first with last
+		# mate index 1 with index 2
+		# mate index 2 with index 1
+		# mate index 3 with index 4
+
+		selected_to_mate.each_with_index do |parent_one, index|
+			if index == selected_to_mate.size+1
+				parent_two = selected_to_mate[0]
+			elsif index.modulo(2) == 0
+				parent_two = selected_to_mate[i-1]
+			else
+				parent_two = selected_to_mate[i+1]
+			end
+			self.mate(parent_one, parent_two)
+		end
+	end
+	def mate(parent_one, parent_two)
+		child = self.crossover(parent_one, parent_two)
+		child = self.mutation(child)
+	end
+	def crossover(parent_one, parent_two)
+		return parent_one if rand >= @probablility_of_cross
+		# create the hash if parameter_ranges that can be passed to the +:Individual:+ class
+		child_parameters = {}
+		parent_one.parameters.each do |parent_one_key, parent_one_value|
+			if rand < 0.5
+				child_parameters[parent_one_key.to_sym] = parent_one_value
+			else
+				child_parameters[parent_one_key.to_sym] = parent_two[parent_one_key.to_sym]
+			end
+		end
+		return Individual.new(child_parameters, rand(100))
+	end
+	def mutation child
+		child.parameters.each do |key, value|
+			
+		end
+	end
+end # MatingHandler
 
 parameter_ranges = {
 	:k => (1..10).to_a,
