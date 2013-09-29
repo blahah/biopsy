@@ -130,7 +130,6 @@ module Biopsy
         return {:results => results,
                 :reduced => self.dimension_reduce(results)}
       else
-        p results
         results.each_pair do |key, value|
           return value.kind_of?(Hash) ? value[:result] : value
         end
