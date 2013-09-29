@@ -77,7 +77,10 @@ module Biopsy
       while in_progress do
         run_iteration
         # update the best result
+        best = @best
         @best = @algorithm.best
+        ptext = params.each_pair.map{ |k, v| "#{k}:#{v}" }.join(", ")
+        puts "found a new best score: #{@best} for parameters #{ptext}" if @best > best
         # have we finished?
         in_progress = !@algorithm.finished?
       end
@@ -103,6 +106,7 @@ module Biopsy
           result = @objective.run_for_output raw_output
           @iteration_count += 1
         end
+        self.print_progress(@iteration_count, @current_params, result, @best)
         @scores[@current_params.to_s] = result
         # get next steps from optimiser
         @current_params = @algorithm.run_one_iteration(@current_params, result)
@@ -110,6 +114,11 @@ module Biopsy
       self.cleanup
     end
 
+    def print_progress(iteration, params, score, best)
+      ptext = params.each_pair.map{ |k, v| "#{k}:#{v}" }.join(", ")
+      puts "run #{iteration}. parameters: #{ptext} | score: #{score} | best #{best}" 
+    end
+    
     def cleanup
       # TODO: make this work
       # remove all but essential files
@@ -117,6 +126,8 @@ module Biopsy
         @objectives.values.each{ |objective| essential_files += objective.essential_files }
       end
       Dir["*"].each do |file|
+        next
+        # TODO: implement this
         next if File.directory? file
         if essential_files && essential_files.include?(file)
           `gzip #{file}` if Settings.instance.gzip_intermediates
