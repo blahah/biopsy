@@ -79,8 +79,10 @@ module Biopsy
         # update the best result
         best = @best
         @best = @algorithm.best
-        ptext = params.each_pair.map{ |k, v| "#{k}:#{v}" }.join(", ")
-        puts "found a new best score: #{@best} for parameters #{ptext}" if @best > best
+        ptext = @current_params.each_pair.map{ |k, v| "#{k}:#{v}" }.join(", ")
+        if (@best && @best.has_key?(:score) && best && best.has_key?(:score) && @best[:score] > best[:score])
+          puts "found a new best score: #{@best[:score]} for parameters #{ptext}"
+        end
         # have we finished?
         in_progress = !@algorithm.finished?
       end
@@ -105,8 +107,8 @@ module Biopsy
         else
           result = @objective.run_for_output raw_output
           @iteration_count += 1
+          self.print_progress(@iteration_count, @current_params, result, @best)
         end
-        self.print_progress(@iteration_count, @current_params, result, @best)
         @scores[@current_params.to_s] = result
         # get next steps from optimiser
         @current_params = @algorithm.run_one_iteration(@current_params, result)
@@ -116,7 +118,9 @@ module Biopsy
 
     def print_progress(iteration, params, score, best)
       ptext = params.each_pair.map{ |k, v| "#{k}:#{v}" }.join(", ")
-      puts "run #{iteration}. parameters: #{ptext} | score: #{score} | best #{best}" 
+      msg = "run #{iteration}. parameters: #{ptext} | score: #{score}"
+      msg += " | best #{best[:score]}" if (best && best.has_key?(:score))
+      puts msg
     end
     
     def cleanup
