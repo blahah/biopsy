@@ -165,7 +165,8 @@ module Biopsy
     Thread = Struct.new(:best, :tabu, :distributions, 
                         :standard_deviations, :recent_scores, 
                         :iterations_since_best, :backtracks,
-                        :current, :current_hood, :loaded)
+                        :current, :current_hood, :loaded,
+                        :score_history, :best_history)
 
     def initialize(parameter_ranges, threads=8, limit=nil)
 
@@ -191,6 +192,8 @@ module Biopsy
       @jump_cutoff = 10
 
       # logging
+      @score_history = []
+      @best_history = []
       @log_data = false
       @logfiles = {}
       self.log_setup
@@ -241,6 +244,8 @@ module Biopsy
         @best = @current
         @standard_deviations = {}
         @recent_scores = []
+        @score_history = []
+        @best_history = []
         @tabu = Set.new
         self.define_neighbourhood_structure
         @current_hood = Biopsy::Hood.new(@distributions, @max_hood_size, @tabu)
@@ -434,6 +439,10 @@ module Biopsy
     end
 
     def log
+      if @current[:score]
+        @score_history << @current[:score]
+        @best_history << @best[:score]
+      end
       if @log_data
         @logfiles[:standard_deviations] << @distributions.map { |k, d| d.sd }
         @logfiles[:best] << [@best[:score]]
@@ -458,6 +467,23 @@ module Biopsy
 
     def random_start_point
       Hash[@ranges.map { |p, r| [p, r.sample] }] 
+    end
+
+    def write_data
+      require 'csv'
+      now = Time.now.to_i
+      CSV.open("../#{now}_scores.csv", "w") do |c|
+        c << %w(iteration thread score best)
+        @threads.each_with_index do |t, t_idx|
+          sh = t.score_history
+          bh = t.best_history
+          sh.zip(bh).each_with_index do |pair, i|
+            c << [i, t_idx] + pair
+          end
+        end
+      end
+      path = File.expand_path("../#{now}_scores.csv")
+      puts "wrote TabuSearch run data to #{path}"
     end
 
   end # TabuSearch
