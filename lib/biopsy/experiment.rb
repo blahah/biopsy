@@ -81,6 +81,7 @@ module Biopsy
         # have we finished?
         in_progress = !@algorithm.finished?
       end
+      @algorithm.write_data if @algorithm.respond_to? :write_data
       puts "found optimum score: #{@best[:score]} for parameters #{@best[:parameters]} in #{@iteration_count} iterations."
       return @best
     end
