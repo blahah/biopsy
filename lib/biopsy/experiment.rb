@@ -79,7 +79,7 @@ module Biopsy
         # update the best result
         best = @best
         @best = @algorithm.best
-        ptext = @current_params.each_pair.map{ |k, v| "#{k}:#{v}" }.join(", ")
+        ptext = @best[:params].each_pair.map{ |k, v| "#{k}:#{v}" }.join(", ")
         if (@best && @best.has_key?(:score) && best && best.has_key?(:score) && @best[:score] > best[:score])
           puts "found a new best score: #{@best[:score]} for parameters #{ptext}"
         end
