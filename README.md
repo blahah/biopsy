@@ -60,7 +60,7 @@ Please don't report issues or request documentation until we are ready for beta 
 
 * ~ 20/24 tasks completed, ~83% done overall
 * alpha released: 6th September 2013
-* planned beta release date: 17th September 2013
+* planned beta release date: 17th November 2013
 
 ### Documentation
 
