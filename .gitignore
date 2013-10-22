@@ -17,3 +17,8 @@ tmp
 _yardoc
 doc/
 .Rproj.user
+
+# emacs tmp
+*~
+[#]*[#]
+.\#*
