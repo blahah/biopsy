@@ -15,8 +15,6 @@ Make sure you have Ruby installed, then:
 
 ## Usage
 
-[]
-
 Detailed usage instructions are on the wiki. Here's a quick overview:
 
 1. Define your optimisation target. This is a program or pipeline you want to optimise, and you define it by filling in a template [YAML file](http://en.wikipedia.org/wiki/YAML). Easy!
