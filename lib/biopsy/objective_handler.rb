@@ -113,9 +113,9 @@ module Biopsy
         files = Dir[glob]
         zerosize = files.reduce(false) { |empty, f| File.size(f) == 0 }
         if files.empty? || zerosize
-          puts Dir.pwd
-          raise ObjectiveHandlerError.new "output files for #{key} matching #{glob} do not exist or are empty"
-          return nil
+          # raise ObjectiveHandlerError.new "output files for #{key} matching #{glob} do not exist or are empty"
+          # return nil
+          return 0
         end
         output_files[key] = files.map { |f| File.expand_path(f) }
       end

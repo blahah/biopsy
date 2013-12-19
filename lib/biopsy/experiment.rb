@@ -96,7 +96,7 @@ module Biopsy
     # Returns the output of the optimiser.
     def run_iteration
       # create temp dir
-        Dir.chdir(self.create_tempdir) do
+      Dir.chdir(self.create_tempdir) do
         # run the target
         raw_output = @target.run @current_params.merge(@options)
         # evaluate with objectives

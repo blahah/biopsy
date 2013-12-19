@@ -126,6 +126,6 @@ module Biopsy
       @parameters.each_pair.map{ |k, v| v }.reduce(1) { |n, arr| n * arr.size }
     end
 
-  end # end of class Domain
+  end # end of class Target
 
 end # end of module Biopsy
