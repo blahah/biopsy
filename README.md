@@ -15,8 +15,6 @@ Make sure you have Ruby installed, then:
 
 ## Usage
 
-[]
-
 Detailed usage instructions are on the wiki. Here's a quick overview:
 
 1. Define your optimisation target. This is a program or pipeline you want to optimise, and you define it by filling in a template [YAML file](http://en.wikipedia.org/wiki/YAML). Easy!
@@ -70,3 +68,5 @@ Documentation is in development and will be released with the beta.
 
 This is *pre-release*, *pre-publication* academic software. In lieu of a paper to cite, please cite this Github repo and/or the [Figshare DOI (http://dx.doi.org/10.6084/m9.figshare.790660
 )](http://dx.doi.org/10.6084/m9.figshare.790660) if your use of the software leads to a publication.
+
+[![Analytics](https://ga-beacon.appspot.com/UA-46900280-1/Blahah/biopsy)](https://github.com/Blahah/biopsy)
