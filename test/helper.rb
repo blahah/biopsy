@@ -105,6 +105,10 @@ class TargetTest
     nil
   end
 
+  def fake_method
+    true
+  end
+
 end
       }
     end

@@ -95,6 +95,15 @@ class TestTarget < Test::Unit::TestCase
       File.delete @target.constructor_path
     end
 
+    should "pass missing method calls to constructor iff it directly defines them" do
+      # this method is defined on the constructor in helper.rb
+      assert_send([@target, :fake_method],
+                  'valid method not passed to constructor')
+      assert_raise NoMethodError do
+        @target.totes_fake_method
+      end
+    end
+
   end # Target context
 
 end # TestTarget context
