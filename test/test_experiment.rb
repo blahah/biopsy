@@ -48,7 +48,7 @@ class TestExperiment < Test::Unit::TestCase
 
     should "respect user's choice of starting point" do
       s = {:a => 4, :b => 2} 
-      e = Biopsy::Experiment.new('target_test', start: s)
+      e = Biopsy::Experiment.new('target_test', start: s, verbosity: :silent)
       assert_equal s, e.start
     end
 
@@ -59,7 +59,7 @@ class TestExperiment < Test::Unit::TestCase
 
     should "return an optimal set of parameters and score when run" do
       Dir.chdir @h.tmp_dir do
-        e = Biopsy::Experiment.new('target_test')
+        e = Biopsy::Experiment.new('target_test', verbosity: :silent)
         known_best = -4
         best_found = e.run[:score]
         assert known_best < best_found
@@ -69,7 +69,7 @@ class TestExperiment < Test::Unit::TestCase
     should "run really quickly when starting from the optimal parameters" do
       Dir.chdir @h.tmp_dir do
         s = {:a => 4, :b => 4, :c => 4} 
-        e = Biopsy::Experiment.new('target_test', start: s)
+        e = Biopsy::Experiment.new('target_test', start: s, verbosity: :silent)
         known_best = -4
         best_found = e.run[:score]
         assert known_best < best_found
@@ -79,7 +79,7 @@ class TestExperiment < Test::Unit::TestCase
     should "run using the parameter sweeper (with limit)" do
       Dir.chdir @h.tmp_dir do
         p = Biopsy::ParameterSweeper.new(@target.parameters, limit: 250)
-        e = Biopsy::Experiment.new('target_test', algorithm: p)
+        e = Biopsy::Experiment.new('target_test', algorithm: p, verbosity: :silent)
         best_found = e.run[:score]
         assert best_found != nil
       end
