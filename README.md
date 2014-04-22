@@ -57,8 +57,6 @@ Please don't report issues or request documentation until we are ready for beta 
 | ObjectiveHandler | DONE   | DONE    | DONE   |
 
 * ~ 20/24 tasks completed, ~83% done overall
-* alpha released: 6th September 2013
-* planned beta release date: 17th November 2013
 
 ### Documentation
 
@@ -68,3 +66,5 @@ Documentation is in development and will be released with the beta.
 
 This is *pre-release*, *pre-publication* academic software. In lieu of a paper to cite, please cite this Github repo and/or the [Figshare DOI (http://dx.doi.org/10.6084/m9.figshare.790660
 )](http://dx.doi.org/10.6084/m9.figshare.790660) if your use of the software leads to a publication.
+
+[![Analytics](https://ga-beacon.appspot.com/UA-46900280-1/Blahah/biopsy)](https://github.com/Blahah/biopsy)

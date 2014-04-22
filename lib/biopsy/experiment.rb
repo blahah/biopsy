@@ -1,4 +1,4 @@
-# Optimisation Framework: Experiment
+1# Optimisation Framework: Experiment
 #
 # == Description
 #
@@ -19,7 +19,8 @@ module Biopsy
     attr_reader :inputs, :outputs, :retain_intermediates, :target, :start, :algorithm
 
     # Returns a new Experiment
-    def initialize(target, options={}, start=nil, algorithm=nil)
+    def initialize(target, options={}, threads=4, start=nil, algorithm=nil)
+      @threads = threads
       @start = start
       @algorithm = algorithm
       if target.is_a? Target
@@ -79,7 +80,7 @@ module Biopsy
         # update the best result
         best = @best
         @best = @algorithm.best
-        ptext = @current_params.each_pair.map{ |k, v| "#{k}:#{v}" }.join(", ")
+        ptext = @best[:parameters].each_pair.map{ |k, v| "#{k}:#{v}" }.join(", ")
         if (@best && @best.has_key?(:score) && best && best.has_key?(:score) && @best[:score] > best[:score])
           puts "found a new best score: #{@best[:score]} for parameters #{ptext}"
         end
@@ -105,7 +106,7 @@ module Biopsy
         if @scores.has_key? param_key
           result = @scores[param_key]
         else
-          result = @objective.run_for_output raw_output
+          result = @objective.run_for_output(raw_output, @threads)
           @iteration_count += 1
           self.print_progress(@iteration_count, @current_params, result, @best)
         end
