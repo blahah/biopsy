@@ -5,8 +5,7 @@ module Biopsy
     MAJOR = 0
     MINOR = 1
     PATCH = 7
-    BUILD = ''
 
-    STRING = [MAJOR, MINOR, PATCH, BUILD].compact.join('.')
+    STRING = [MAJOR, MINOR, PATCH].compact.join('.')
   end
 end # Biopsy

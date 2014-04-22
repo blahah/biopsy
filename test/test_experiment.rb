@@ -47,7 +47,7 @@ class TestExperiment < Test::Unit::TestCase
 
     should "respect user's choice of starting point" do
       s = {:a => 2, :b => 4}
-      e = Biopsy::Experiment.new('target_test', nil, s)
+      e = Biopsy::Experiment.new('target_test', start=s)
       assert_equal s, e.start
     end
 
