@@ -51,7 +51,8 @@ module Biopsy
     # specified, the default location ('~/.biopsyrc') is used.
     # Settings loaded from the file are merged into any
     # previously loaded settings.
-    def load(config_file=@config_file)
+    def load config_file
+      config_file ||= @config_file
       newsets = YAML::load_file(config_file)
       raise 'Config file was not valid YAML' if newsets == false
       newsets.deep_symbolize.each_pair do |key, value|
@@ -65,7 +66,8 @@ module Biopsy
 
     # Saves the settings to a YAML config file. If no file is
     # specified, the default location ('~/.biopsyrc') is used.
-    def save(config_file=@config_file)
+    def save config_file
+      config_file ||= @config_file
       File.open(config_file, 'w') do |f|
         f.puts self.to_s
       end

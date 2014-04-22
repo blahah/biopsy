@@ -24,7 +24,7 @@ module Biopsy
 
     attr_reader :combinations
 
-    def initialize(ranges, threads=8, limit=nil)
+    def initialize(ranges, threads:1, limit:1000)
       @ranges = ranges
       # parameter_counter: a count of input parameters to be used
       @parameter_counter = 1
@@ -32,29 +32,41 @@ module Biopsy
       @combinations = []
       # if the number of threads is set, update the global variable, if not default to 1
       @threads = threads
+      # set the limit to the number of parameters
+      @limit = limit
       # convert all options to an array so it can be handled by the generate_combinations() method
       # ..this is for users entering single values e.g 4 as a parameter
       @ranges.each { |key, value| value = [value] unless value.kind_of? Array }
-      self.generate_combinations
+      self.generate_combinations(0, {})
       # restrict to a subsample?
-      unless limit.nil?
-        @combinations = @combinations.sample limit
+      
+      if @limit < @combinations.size
+        @combinations = @combinations.sample @limit
       end
     end
 
     def setup *args
-      nil 
+      @best = {
+        :parameters => nil,
+        :score => nil
+      }
     end
 
     # return the next parameter set to evaluate
-    def run_one_iteration *args
-      @combinations.pop
-    rescue
-      nil
+    def run_one_iteration(parameters, score)
+      @current = {:parameters => parameters, :score => score}
+      self.update_best?
+      @combinations.pop rescue nil
+    end
+
+    def update_best?
+      if @best[:score].nil? || @current[:score] > @best[:score]
+        @best = @current.clone
+      end
     end
 
     # generate all the parameter combinations to be applied
-    def generate_combinations(index=0, opts={})
+    def generate_combinations(index, opts)
       if index == @ranges.length
         @combinations << opts.clone  
         return
@@ -67,13 +79,29 @@ module Biopsy
       end
     end
 
+    def best
+      @best
+    end
+
     def knows_starting_point?
       true
     end
 
     def select_starting_point
-      self.run_one_iteration
+      return @combinations.pop
     end
 
+    def random_start_point
+      return @combinations.pop
+    end
+
+    def finished?
+      return @combinations.empty?
+    end
+
+    # True if this algorithm chooses its own starting point
+    def knows_starting_point?
+      true
+    end
   end
 end

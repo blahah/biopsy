@@ -3,7 +3,7 @@
 
 class FastestOptimum < Biopsy::ObjectiveFunction
 
-  def run(optdata, threads=6)
+  def run(optdata, threads:6)
     info "running objective: FastestOptimum"
     t0 = Time.now
     @threads = threads

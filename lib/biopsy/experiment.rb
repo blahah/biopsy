@@ -1,4 +1,4 @@
-1# Optimisation Framework: Experiment
+# Optimisation Framework: Experiment
 #
 # == Description
 #
@@ -12,6 +12,8 @@
 # cycle. It takes user input, runs the target program, the objective function(s)
 # and the optimisation algorithm, looping through the optimisation cycle until
 # completion and then returning the output.
+require 'logger'
+
 module Biopsy
 
   class Experiment
@@ -19,7 +21,7 @@ module Biopsy
     attr_reader :inputs, :outputs, :retain_intermediates, :target, :start, :algorithm
 
     # Returns a new Experiment
-    def initialize(target, options={}, threads=4, start=nil, algorithm=nil)
+    def initialize(target, options:{}, threads:4, start:nil, algorithm:nil)
       @threads = threads
       @start = start
       @algorithm = algorithm
@@ -38,7 +40,7 @@ module Biopsy
 
     # return the set of parameters to evaluate first
     def select_starting_point
-      return unless @start.nil?
+      return if !@start.nil?
       if @algorithm && @algorithm.knows_starting_point?
         @start = @algorithm.select_starting_point
       else
@@ -53,6 +55,7 @@ module Biopsy
 
     # select the optimisation algorithm to use
     def select_algorithm
+      return if !algorithm.nil?
       max = Settings.instance.sweep_cutoff
       n = @target.count_parameter_permutations
       if n < max
@@ -97,7 +100,7 @@ module Biopsy
     # Returns the output of the optimiser.
     def run_iteration
       # create temp dir
-      Dir.chdir(self.create_tempdir) do
+        Dir.chdir(self.create_tempdir) do
         # run the target
         raw_output = @target.run @current_params.merge(@options)
         # evaluate with objectives
