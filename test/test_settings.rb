@@ -17,7 +17,7 @@ class TestSettings < Test::Unit::TestCase
     end
 
     teardown do
-      #File.delete @config_file if File.exists? @config_file
+      File.delete @config_file if File.exists? @config_file
     end
 
     should "load the specified config file" do
