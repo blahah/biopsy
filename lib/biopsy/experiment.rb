@@ -109,7 +109,7 @@ module Biopsy
         if @scores.has_key? param_key
           result = @scores[param_key]
         else
-          result = @objective.run_for_output(raw_output, @threads)
+          result = @objective.run_for_output(raw_output, @threads, nil)
           @iteration_count += 1
           self.print_progress(@iteration_count, @current_params, result, @best)
         end

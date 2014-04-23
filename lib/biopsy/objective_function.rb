@@ -25,7 +25,7 @@ module Biopsy
       #
       # objective = ObjectiveFunction.new
       # result = objective.run('example.fasta')
-    def run(assemblydata)
+    def run(raw_output, output_files, threads)
       raise NotImplementedError.new("You must implement a run method for each objective function")
     end
 

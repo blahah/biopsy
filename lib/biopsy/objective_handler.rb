@@ -82,10 +82,10 @@ module Biopsy
         # objective function(s), with keys as the keys expected by the
         # objective function
         return objective.run(raw_output, output_files, threads)
-      rescue NotImplementedError => e
-        puts "Error: objective function #{objective.class} does not implement the run() method"
-        puts "Please refer to the documentation for instructions on adding objective functions"
-        raise e
+      rescue 
+        raise NotImplementedError.new("Error: objective function #{objective.class} does not
+         implement the run() method\nPlease refer to the documentation for instructions on
+          adding objective functions")
       end
     end
 
@@ -100,21 +100,20 @@ module Biopsy
         w = value[:weighting]
         a = value[:result]
         m = value[:max]
-        total += w * (((o - a)/m) ** 2)
+        total += w * (((o - a)/m) ** 2) if m!=0
       end
       return Math.sqrt(total) / results.length
     end
 
     # Run all objectives functions for +:output+. 
-    def run_for_output(raw_output, threads=6, allresults=false)
+    def run_for_output(raw_output, threads, allresults)
       # check output files exist
       output_files = {}
       @target.output.each_pair do |key, glob|
         files = Dir[glob]
         zerosize = files.reduce(false) { |empty, f| File.size(f) == 0 }
         if files.empty? || zerosize
-          puts ObjectiveHandlerError.new "output files for #{key} matching #{glob} do not exist or are empty"
-          return nil
+          raise ObjectiveHandlerError.new "output files for #{key} matching #{glob} do not exist or are empty"
         end
         output_files[key] = files.map { |f| File.expand_path(f) }
       end

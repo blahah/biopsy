@@ -30,7 +30,7 @@ module Biopsy
       @range = range
       @sd_increment_proportion = sd_increment_proportion
       self.generate_distribution
-    rescue
+      rescue
         raise "generation of distribution with mean: #{@mean}, sd: #{@sd} failed."
     end
 
@@ -45,7 +45,7 @@ module Biopsy
     end
 
     # loosen the distribution by increasing the sd
-    # and renerating
+    # and regenerating
     def loosen(factor=1)
       @sd += @sd_increment_proportion * factor * @range.size
       self.limit_sd

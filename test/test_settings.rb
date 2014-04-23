@@ -17,11 +17,17 @@ class TestSettings < Test::Unit::TestCase
     end
 
     teardown do
-      File.delete @config_file if File.exists? @config_file
+      #File.delete @config_file if File.exists? @config_file
     end
 
     should "load the specified config file" do
       assert @settings.objectives_dir == @data[:objectives_dir]
+    end
+
+    should "raise an error on loading invalid YAML file" do
+      assert_raise(Biopsy::SettingsError) do
+        a = @settings.load(File.expand_path('test/brokenconfig.yml'))
+      end
     end
 
     should "complain about malformed config file" do

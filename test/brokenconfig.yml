@@ -1,0 +1,3 @@
+---
+:objectives_dir: ./objectives
+:wrongkey: this_should_cause_error
