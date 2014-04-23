@@ -71,24 +71,24 @@ class TestExperiment < Test::Unit::TestCase
       assert ans, true
     end
 
-    # should "run really quickly when starting from the optimal parameters" do
-    #   Dir.chdir @h.tmp_dir do
-    #     s = {:a => 4, :b => 4, :c => 4} 
-    #     e = Biopsy::Experiment.new('target_test', start: s)
-    #     known_best = -4
-    #     best_found = e.run[:score]
-    #     assert known_best < best_found
-    #   end
-    # end
+    should "run really quickly when starting from the optimal parameters" do
+      Dir.chdir @h.tmp_dir do
+        s = {:a => 4, :b => 4, :c => 4} 
+        e = Biopsy::Experiment.new('target_test', start: s)
+        known_best = -4
+        best_found = e.run[:score]
+        assert known_best < best_found
+      end
+    end
 
-    # should "run using the parameter sweeper (with limit)" do
-    #   Dir.chdir @h.tmp_dir do
-    #     p = Biopsy::ParameterSweeper.new(@target.parameters, limit: 250)
-    #     e = Biopsy::Experiment.new('target_test', algorithm: p)
-    #     best_found = e.run[:score]
-    #     assert best_found != nil
-    #   end
-    # end
+    should "run using the parameter sweeper (with limit)" do
+      Dir.chdir @h.tmp_dir do
+        p = Biopsy::ParameterSweeper.new(@target.parameters, limit: 250)
+        e = Biopsy::Experiment.new('target_test', algorithm: p)
+        best_found = e.run[:score]
+        assert best_found != nil
+      end
+    end
   end # Experiment context
 
 end # TestExperiment
