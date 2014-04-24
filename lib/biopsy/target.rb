@@ -128,10 +128,10 @@ module Biopsy
 
     # pass calls to missing methods to the constructor iff
     # the constructor's class directly defines that method
-    def method_missing(meth, *args, &block)
+    def method_missing(method, *args, &block)
       const_methods = @constructor.class.instance_methods(false)
-      if const_methods.include? meth
-        @constructor
+      if const_methods.include? method
+        return @constructor.send(method, *args, &block)
       else
         super
       end
@@ -139,9 +139,9 @@ module Biopsy
 
     # accurately report ability to respond to methods passed
     # to constructor
-    def method_missing(meth, *args, &block)
+    def respond_to?(method, *args, &block)
       const_methods = @constructor.class.instance_methods(false)
-      if const_methods.include? meth
+      if const_methods.include? method
         true
       else
         super

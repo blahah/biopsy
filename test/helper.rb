@@ -106,7 +106,7 @@ class TargetTest
   end
 
   def fake_method
-    true
+    :fake_method_success
   end
 
 end

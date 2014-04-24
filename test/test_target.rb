@@ -99,6 +99,7 @@ class TestTarget < Test::Unit::TestCase
       # this method is defined on the constructor in helper.rb
       assert_send([@target, :fake_method],
                   'valid method not passed to constructor')
+      assert_equal @target.fake_method, :fake_method_success
       assert_raise NoMethodError do
         @target.totes_fake_method
       end
