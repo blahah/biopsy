@@ -22,10 +22,12 @@ module Biopsy
     attr_reader :target, :start, :algorithm
 
     # Returns a new Experiment
-    def initialize(target, options:{}, threads:4, start:nil, algorithm:nil)
+    def initialize(target, options:{}, threads:4, start:nil, algorithm:nil,
+                   verbosity: :quiet)
       @threads = threads
       @start = start
       @algorithm = algorithm
+      @verbosity = verbosity
       if target.is_a? Target
         @target = target
       else
@@ -90,16 +92,18 @@ module Biopsy
            best &&
            best.key?(:score) &&
            @best[:score] > best[:score]
-          puts "found a new best score: #{@best[:score]} "\
-               "for parameters #{ptext}"
+           puts "found a new best score: #{@best[:score]} \
+                 for parameters #{ptext}"
         end
         # have we finished?
         in_progress = !@algorithm.finished?
       end
       @algorithm.write_data if @algorithm.respond_to? :write_data
-      puts "found optimum score: #{@best[:score]} for parameters " \
-           "#{@best[:parameters]} in #{@iteration_count} iterations."
-      @best
+      unless @verbosity == :silent
+        puts "found optimum score: #{@best[:score]} for parameters \
+              #{@best[:parameters]} in #{@iteration_count} iterations."
+      end
+      return @best
     end
 
     # Runs a single iteration of the optimisation,
@@ -128,10 +132,12 @@ module Biopsy
     end
 
     def print_progress(iteration, params, score, best)
-      ptext = params.each_pair.map{ |k, v| "#{k}:#{v}" }.join(", ")
-      msg = "run #{iteration}. parameters: #{ptext} | score: #{score}"
-      msg += " | best #{best[:score]}" if (best && best.key?(:score))
-      puts msg
+      unless [:silent, :quiet].include? @verbosity
+        ptext = params.each_pair.map{ |k, v| "#{k}:#{v}" }.join(", ")
+        msg = "run #{iteration}. parameters: #{ptext} | score: #{score}"
+        msg += " | best #{best[:score]}" if (best && best.has_key?(:score))
+        puts msg
+      end
     end
     
     def cleanup

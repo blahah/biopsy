@@ -142,6 +142,28 @@ module Biopsy
       @parameters.each_pair.map{ |k, v| v }.reduce(1) { |n, arr| n * arr.size }
     end
 
+    # pass calls to missing methods to the constructor iff
+    # the constructor's class directly defines that method
+    def method_missing(method, *args, &block)
+      const_methods = @constructor.class.instance_methods(false)
+      if const_methods.include? method
+        return @constructor.send(method, *args, &block)
+      else
+        super
+      end
+    end
+
+    # accurately report ability to respond to methods passed
+    # to constructor
+    def respond_to?(method, *args, &block)
+      const_methods = @constructor.class.instance_methods(false)
+      if const_methods.include? method
+        true
+      else
+        super
+      end
+    end
+
   end # end of class Target
 
 end # end of module Biopsy

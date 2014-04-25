@@ -18,7 +18,8 @@ Gem::Specification.new do |gem|
   gem.add_dependency 'rubystats'
   gem.add_dependency 'statsample'
 
-  gem.add_development_dependency 'turn'
+  gem.add_development_dependency 'minitest'
+  gem.add_development_dependency 'turn', '~> 0.9'
   gem.add_development_dependency 'simplecov'
   gem.add_development_dependency 'shoulda-context'
   gem.add_development_dependency 'coveralls', '~> 0.6.7'
