@@ -13,7 +13,7 @@ Gem::Specification.new do |gem|
   gem.files = Dir['Rakefile', '{lib,test}/**/*', 'README*', 'LICENSE*']
   gem.require_paths = %w[ lib ]
 
-  gem.add_dependency 'rake', '~> 10.3'
+  gem.add_dependency 'rake', '~> 10.1'
   gem.add_dependency 'threach'
   gem.add_dependency 'rubystats'
   gem.add_dependency 'statsample'

@@ -159,8 +159,8 @@ module Biopsy
   class TabuSearch #< OptmisationAlgorithm
 
     attr_reader :current, :best, :hood_no
-    attr_accessor :max_hood_size, :sd_increment_proportion, :starting_sd_divisor, :backtrack_cutoff
-    attr_accessor :jump_cutoff
+    attr_accessor :max_hood_size, :sd_increment_proportion
+    attr_accessor :starting_sd_divisor, :backtrack_cutoff, :jump_cutoff
 
     Thread = Struct.new(:best, :tabu, :distributions, 
                         :standard_deviations, :recent_scores, 

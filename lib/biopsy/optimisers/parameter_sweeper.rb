@@ -18,7 +18,7 @@ require 'logger'
 
 module Biopsy
   # options - is a hash of two hashes, :settings and :parameters
-  #   :ranges are arrays to be parameter sweeped 
+  #   :ranges are arrays to be parameter sweeped
   #     ---(single values may be present, these are also remain unchanged but are accessible within the parameters hash to the constructor)
   class ParameterSweeper
 
@@ -45,7 +45,7 @@ module Biopsy
       end
     end
 
-    def setup *args
+    def setup(*_args)
       @best = {
         :parameters => nil,
         :score => nil
@@ -54,9 +54,11 @@ module Biopsy
 
     # return the next parameter set to evaluate
     def run_one_iteration(parameters, score)
-      @current = {:parameters => parameters, :score => score}
+      @current = { :parameters => parameters, :score => score }
       self.update_best?
-      @combinations.pop rescue nil
+      @combinations.pop
+    rescue
+      nil
     end
 
     def update_best?
@@ -68,7 +70,7 @@ module Biopsy
     # generate all the parameter combinations to be applied
     def generate_combinations(index, opts)
       if index == @ranges.length
-        @combinations << opts.clone  
+        @combinations << opts.clone
         return
       end
       # recurse
@@ -88,15 +90,15 @@ module Biopsy
     end
 
     def select_starting_point
-      return @combinations.pop
+      @combinations.pop
     end
 
     def random_start_point
-      return @combinations.pop
+      @combinations.pop
     end
 
     def finished?
-      return @combinations.empty?
+      @combinations.empty?
     end
 
     # True if this algorithm chooses its own starting point

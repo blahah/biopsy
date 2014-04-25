@@ -2,7 +2,7 @@ PATH
   remote: .
   specs:
     biopsy (0.1.7)
-      rake (~> 10.3)
+      rake (~> 10.1)
       rubystats
       statsample
       threach
