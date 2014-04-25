@@ -18,10 +18,12 @@ module Biopsy
 
   class Experiment
 
-    attr_reader :inputs, :outputs, :retain_intermediates, :target, :start, :algorithm
+    attr_reader :inputs, :outputs, :retain_intermediates
+    attr_reader :target, :start, :algorithm
 
     # Returns a new Experiment
-    def initialize(target, options:{}, threads:4, start:nil, algorithm:nil, verbosity: :quiet)
+    def initialize(target, options:{}, threads:4, start:nil, algorithm:nil,
+                   verbosity: :quiet)
       @threads = threads
       @start = start
       @algorithm = algorithm
@@ -51,12 +53,12 @@ module Biopsy
 
     # Return a random set of parameters from the parameter space.
     def random_start_point
-      Hash[@target.parameters.map { |p, r| [p, r.sample] }] 
+      Hash[@target.parameters.map { |p, r| [p, r.sample] }]
     end
 
     # select the optimisation algorithm to use
     def select_algorithm
-      return if !algorithm.nil?
+      return unless algorithm
       max = Settings.instance.sweep_cutoff
       n = @target.count_parameter_permutations
       if n < max
@@ -67,7 +69,7 @@ module Biopsy
     end
 
     # load the target named +:target_name+
-    def load_target target_name
+    def load_target(target_name)
       @target = Target.new
       @target.load_by_name target_name
     end
@@ -79,21 +81,27 @@ module Biopsy
       in_progress = true
       @algorithm.setup @start
       @current_params = @start
-      while in_progress do
+      while in_progress
         run_iteration
         # update the best result
         best = @best
         @best = @algorithm.best
         ptext = @best[:parameters].each_pair.map{ |k, v| "#{k}:#{v}" }.join(", ")
-        if (@best && @best.has_key?(:score) && best && best.has_key?(:score) && @best[:score] > best[:score])
-          puts "found a new best score: #{@best[:score]} for parameters #{ptext}" unless @verbosity == :silent
+        if @best &&
+           @best.key?(:score) &&
+           best &&
+           best.key?(:score) &&
+           @best[:score] > best[:score]
+           puts "found a new best score: #{@best[:score]} \
+                 for parameters #{ptext}"
         end
         # have we finished?
         in_progress = !@algorithm.finished?
       end
       @algorithm.write_data if @algorithm.respond_to? :write_data
       unless @verbosity == :silent
-        puts "found optimum score: #{@best[:score]} for parameters #{@best[:parameters]} in #{@iteration_count} iterations."
+        puts "found optimum score: #{@best[:score]} for parameters \
+              #{@best[:parameters]} in #{@iteration_count} iterations."
       end
       return @best
     end
@@ -103,16 +111,16 @@ module Biopsy
     # Returns the output of the optimiser.
     def run_iteration
       # create temp dir
-        Dir.chdir(self.create_tempdir) do
+      Dir.chdir(self.create_tempdir) do
         # run the target
         raw_output = @target.run @current_params.merge(@options)
         # evaluate with objectives
         param_key = @current_params.to_s
         result = nil
-        if @scores.has_key? param_key
+        if @scores.key? param_key
           result = @scores[param_key]
         else
-          result = @objective.run_for_output(raw_output, @threads)
+          result = @objective.run_for_output(raw_output, @threads, nil)
           @iteration_count += 1
           self.print_progress(@iteration_count, @current_params, result, @best)
         end
@@ -135,17 +143,21 @@ module Biopsy
     def cleanup
       # TODO: make this work
       # remove all but essential files
+      essential_files = ""
       if Settings.instance.keep_intermediates
-        @objectives.values.each{ |objective| essential_files += objective.essential_files }
+        # @objectives isn't mentioned anywhere in the rest of this file
+        @objectives.values.each do |objective|
+          essential_files += objective.essential_files
+        end
       end
       Dir["*"].each do |file|
         next
         # TODO: implement this
-        next if File.directory? file
-        if essential_files && essential_files.include?(file)
-          `gzip #{file}` if Settings.instance.gzip_intermediates
-          FileUtils.mv("#{file}.gz", '../output')
-        end
+        # next if File.directory? file
+        # if essential_files && essential_files.include?(file)
+        #   `gzip #{file}` if Settings.instance.gzip_intermediates
+        #   FileUtils.mv("#{file}.gz", '../output')
+        # end
       end
       FileUtils.rm_rf @last_tempdir
     end
@@ -157,11 +169,11 @@ module Biopsy
         # generate random dirnames until we find one that
         # doesn't exist
         test_token = SecureRandom.hex
-        break test_token unless File.exists? test_token
+        break test_token unless File.exist? test_token
       end
       Dir.mkdir(token)
       @last_tempdir = token
-      return token
+      token
     end
 
   end # end of class RunHandler

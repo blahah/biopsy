@@ -5,6 +5,9 @@ module Biopsy
   class TargetLoadError < Exception
   end
 
+  class TypeLoadError < Exception
+  end
+
   class Target
     require 'yaml'
     require 'set'
@@ -104,12 +107,25 @@ module Biopsy
           # optimise this parameter
           if data[:values] 
             # definition has provided an array of values
-            raise TargetLoadError.new("'values' for parameter #{param} is not an array") unless data[:values].is_a? Array
+            if !data[:values].is_a? Array
+              raise TargetLoadError.new("'values' for parameter #{param} is not an array")
+            end
+            if data[:type] == 'integer'
+              data[:values].each do |v|
+                raise TypeLoadError.new("'values' for parameter #{param} expected integer") unless v.is_a? Integer
+              end
+            elsif data[:type] == 'string'
+              data[:values].each do |v|
+                raise TypeLoadError.new("'values' for parameter #{param} expected string") unless v.is_a? String
+              end
+            end
             @parameters[param] = data[:values]
           else
             # definition has specified a range
             min, max, step = data[:min], data[:max], data[:step]
-            raise TargetLoadError.new("min and max must be set for parameter #{param}") unless min && max
+            unless min && max
+              raise TargetLoadError.new("min and max must be set for parameter #{param}") 
+            end
             range = (min..max)
             range = range.step(step) if step
             @parameters[param] = range.to_a

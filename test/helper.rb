@@ -153,6 +153,24 @@ end
     self.string_dump objective, @objective_path
   end
 
+  def create_invalid_objective
+    objective = %Q{
+class TestObjective2 < Biopsy::ObjectiveFunction
+
+  require 'yaml'
+
+  def initialize
+    @optimum = 0
+    @max = 0
+    @weighting = 1
+  end
+
+end
+    }
+    @objective_path = File.join(@objective_dir, 'test_objective2.rb')
+    self.string_dump objective, @objective_path
+  end
+
   # Dump +:object+ as YAML to +:file+
   def yaml_dump object, file
     self.string_dump object.to_yaml, file

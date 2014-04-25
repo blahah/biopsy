@@ -56,6 +56,7 @@ class TestTarget < Test::Unit::TestCase
 
     should "be able to store a loaded config file" do
       config = YAML::load_file(@h.target_path).deep_symbolize
+      config[:shortname] = 'tt'
       @target.store_config config
       @h.target_data.each_pair do |key, value|
         if key == :parameters
@@ -65,10 +66,10 @@ class TestTarget < Test::Unit::TestCase
               r = (spec[:min]..spec[:max])
               r = spec[:step] ? r.step(spec[:step]) : r
               parsed[param] = r.to_a
-            elsif spec[:values]
-              parsed[param] = spec[:values]
-            else
-              assert false, "parameter #{param} with spec #{spec} has no range or values"
+            # elsif spec[:values]
+            #   parsed[param] = spec[:values]
+            # else
+            #   assert false, "parameter #{param} with spec #{spec} has no range or values"
             end
           end
           parsed.each_pair do |param, spec|
@@ -95,7 +96,77 @@ class TestTarget < Test::Unit::TestCase
       File.delete @target.constructor_path
     end
 
-    should "pass missing method calls to constructor iff it directly defines them" do
+    should "raise an exception if values doesn't provide an array" do
+      params = {
+        :a => {
+          :type => 'integer',
+          :opt => true,
+          :values => 3
+        }
+      }
+      assert_raise Biopsy::TargetLoadError do
+        @target.generate_parameters params
+      end
+    end
+
+    should "raise an exception for trying to load a string as an integer" do
+      params = {
+        :a => {
+          :type => 'integer',
+          :opt => true,
+          :values => ["yes","no","maybe"]
+        }
+      }
+      assert_raise Biopsy::TypeLoadError do
+        @target.generate_parameters params
+      end
+    end
+
+    should "raise an exception for trying to load an integer as a string" do
+      params = {
+        :b => {
+          :type => 'string',
+          :opt => true,
+          :values => [1,2,3]
+        }
+      }
+      assert_raise Biopsy::TypeLoadError do
+        @target.generate_parameters params
+      end
+    end
+
+    should "raise an exception of type TargetLoadError" do
+      params = {
+        :a => {
+          :type => 'integer',
+          :opt => true
+        }
+      }
+      assert_raise Biopsy::TargetLoadError do
+        @target.generate_parameters params
+      end
+    end
+
+    should "load array" do
+      params = {
+        :a => {
+          :type => 'string',
+          :opt => true,
+          :values => ["yes","no","maybe"]
+        },
+        :b => {
+          :type => 'integer',
+          :opt => false,
+          :values => 0
+        }
+      }
+      @target.generate_parameters params
+      assert_equal @target.parameters, {:a => ["yes", "no", "maybe"]}
+      assert_equal @target.options, {:b=>{:type=>"integer", :opt=>false, :values=>0}}
+    end
+
+    should "pass missing method calls to constructor iff \
+            it directly defines them" do
       # this method is defined on the constructor in helper.rb
       assert_send([@target, :fake_method],
                   'valid method not passed to constructor')
