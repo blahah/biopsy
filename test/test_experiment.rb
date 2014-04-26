@@ -69,8 +69,7 @@ class TestExperiment < Test::Unit::TestCase
     end
 
     should 'always finish running an experiment' do
-      ans = false
-      assert ans, true
+      assert_equal false, true, 'not yet implemented'
     end
 
     should 'run really quickly when starting from the optimal parameters' do

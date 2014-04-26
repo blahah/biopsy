@@ -58,7 +58,7 @@ module Biopsy
 
     # select the optimisation algorithm to use
     def select_algorithm
-      return unless algorithm
+      return if algorithm
       max = Settings.instance.sweep_cutoff
       n = @target.count_parameter_permutations
       if n < max
