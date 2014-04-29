@@ -20,32 +20,52 @@ require 'threach'
 require 'logger'
 
 module Biopsy
+
+  class Combinator
+
+    include Enumerable
+   
+    def initialize parameters
+      @parameters = parameters
+    end
+   
+    def generate_combinations(index, opts, &block)
+      if index == @parameters.length
+        block.call opts.clone
+        return
+      end
+      # recurse
+      key = @parameters.keys[index]
+      @parameters[key].each do |value|
+        opts[key] = value
+        generate_combinations(index + 1, opts, &block)
+      end
+    end
+
+    def each &block
+      generate_combinations(0, {}, &block)
+    end
+  end
+
   # options - is a hash of two hashes, :settings and :parameters
   #   :ranges are arrays to be parameter sweeped
-  #     ---(single values may be present, these are also remain unchanged but are accessible within the parameters hash to the constructor)
+  #     ---(single values may be present, these are also remain unchanged
+  #     but are accessible within the parameters hash to the constructor)
   class ParameterSweeper
 
-    attr_reader :combinations
+    attr_reader :combinator, :combinations, :best
 
-    def initialize(ranges, threads:1, limit:1000)
+    def initialize(ranges)
       @ranges = ranges
-      # parameter_counter: a count of input parameters to be used
-      @parameter_counter = 1
-      # input_combinations: an array of arrays of input parameters
-      @combinations = []
-      # if the number of threads is set, update the global variable, if not default to 1
-      @threads = threads
-      # set the limit to the number of parameters
-      @limit = limit
-      # convert all options to an array so it can be handled by the generate_combinations() method
+      # convert all options to an array so it can be handled by the
+      # generate_combinations() method
       # ..this is for users entering single values e.g 4 as a parameter
-      @ranges.each { |key, value| value = [value] unless value.kind_of? Array }
-      self.generate_combinations(0, {})
+      @ranges.each_value{ |value| value = [value] unless value.kind_of? Array }
       # restrict to a subsample?
-      
-      if @limit < @combinations.size
-        @combinations = @combinations.sample @limit
-      end
+      @combinations = 1
+      @ranges.each { |r| @combinations *= r[1].size }
+      @is_finished = false
+      @combinator = (Combinator.new @ranges).to_enum
     end
 
     def setup(*_args)
