@@ -82,12 +82,12 @@ class TestExperiment < Test::Unit::TestCase
       end
     end
 
-    should 'run using the parameter sweeper (with limit)' do
+    should 'run using the parameter sweeper' do
       Dir.chdir @h.tmp_dir do
-        p = Biopsy::ParameterSweeper.new(@target.parameters, limit: 250)
+        p = Biopsy::ParameterSweeper.new(@target.parameters)
         e = Biopsy::Experiment.new('target_test', algorithm: p, verbosity: :silent)
-        best_found = e.run[:score]
-        assert best_found
+        best_found = e.run[:parameters]
+        assert_equal best_found, {:a=>4, :b=>4, :c=>4}
       end
     end
   end # Experiment context
