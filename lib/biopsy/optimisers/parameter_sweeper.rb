@@ -79,33 +79,23 @@ module Biopsy
     def run_one_iteration(parameters, score)
       @current = { :parameters => parameters, :score => score }
       self.update_best?
-      @combinations.pop
-    rescue
-      nil
+      return @combinator.next
+    rescue 
+      @is_finished = true
+      return nil
     end
 
     def update_best?
+      raise "best is nil. should run setup first" if @best.nil?
       if @best[:score].nil? || @current[:score] > @best[:score]
         @best = @current.clone
       end
     end
 
-    # generate all the parameter combinations to be applied
-    def generate_combinations(index, opts)
-      if index == @ranges.length
-        @combinations << opts.clone
-        return
-      end
-      # recurse
-      key = @ranges.keys[index]
-      @ranges[key].each do |value|
-        opts[key] = value
-        generate_combinations(index + 1, opts)
-      end
-    end
-
-    def best
-      @best
+    def next
+      @combinator.next
+    rescue
+      nil
     end
 
     def knows_starting_point?
@@ -113,15 +103,15 @@ module Biopsy
     end
 
     def select_starting_point
-      @combinations.pop
+      @combinator.next
     end
 
     def random_start_point
-      @combinations.pop
+      @combinator.next
     end
 
     def finished?
-      @combinations.empty?
+      @is_finished
     end
 
     # True if this algorithm chooses its own starting point
