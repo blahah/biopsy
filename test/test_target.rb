@@ -162,11 +162,12 @@ class TestTarget < Test::Unit::TestCase
       }
       @target.generate_parameters params
       assert_equal @target.parameters, {:a => ["yes", "no", "maybe"]}
-      assert_equal @target.options, {:b=>{:type=>"integer", :opt=>false, :values=>0}}
+      assert_equal @target.options,
+                   {:b=> { :type=>"integer", :opt=>false, :values=>0 } }
     end
 
-    should "pass missing method calls to constructor iff \
-            it directly defines them" do
+    should "pass missing method calls to constructor iff "+
+           "it directly defines them" do
       # this method is defined on the constructor in helper.rb
       assert_send([@target, :fake_method],
                   'valid method not passed to constructor')
