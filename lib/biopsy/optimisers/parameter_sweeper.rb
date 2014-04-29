@@ -2,13 +2,16 @@
 # options = {:settings => {...}, :parameters => {...}}
 #
 # Description:
-# ParameterSweeper generates all combinations of a hash of arrays (options[:parameters]).
-# The generated combinations are each   passed in turn to the constructor which returns an execute command
-# incorporating the parameters, and finally the target program is run with each generated command.
+# ParameterSweeper generates all combinations of a hash of arrays
+# (options[:parameters]).
+# The generated combinations are each passed in turn to the constructor
+# which returns an execute command incorporating the parameters, and finally
+# the target program is run with each generated command.
 #
-# The constructor will also have access to an unchanging settings hash (options[:settings])
-# constructor proc will be passed multipule hashes in format: {:settings => {...}, :parameters => {...}}
-# where the values in settings remain constant, and the values in parameters vary 
+# The constructor will also have access to an unchanging settings hash
+# (options[:settings]) constructor proc will be passed multipule hashes in
+# format: {:settings => {...}, :parameters => {...}} where the values in
+# settings remain constant, and the values in parameters vary
 
 require 'pp'
 require 'fileutils'
