@@ -93,12 +93,6 @@ module Biopsy
       # objective function(s), with keys as the keys expected by the
       # objective function
       return objective.run(raw_output, output_files, threads)
-    rescue
-      error = "Error: objective function #{objective.class} does not "
-      error << "implement the run() method\nPlease refer to the "
-      error << "documentation for instructions on adding objective functions"
-      # raise NotImplementedError.new("message")
-      raise NotImplementedError, error
     end
 
     # Perform a euclidean distance dimension reduction of multiple objectives
