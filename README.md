@@ -53,7 +53,7 @@ Please don't report issues or request documentation until we are ready for beta 
 | Domain           | DONE   | DONE    | DONE   |
 | Experiment       | DONE   | DONE    | DONE   |
 | TabuSearch       | DONE   | -       | -      |
-| ParameterSweeper | DONE   | -       | -      |
+| ParameterSweeper | DONE   | DONE    | -      |
 | ObjectiveHandler | DONE   | DONE    | DONE   |
 
 * ~ 20/24 tasks completed, ~83% done overall
