@@ -92,16 +92,18 @@ module Biopsy
            best &&
            best.key?(:score) &&
            @best[:score] > best[:score]
-           puts "found a new best score: #{@best[:score]} \
-                 for parameters #{ptext}"
+           unless @verbosity == :silent
+             puts "found a new best score: #{@best[:score]} "+
+                  "for parameters #{ptext}"
+           end
         end
         # have we finished?
         in_progress = !@algorithm.finished?
       end
       @algorithm.write_data if @algorithm.respond_to? :write_data
       unless @verbosity == :silent
-        puts "found optimum score: #{@best[:score]} for parameters \
-              #{@best[:parameters]} in #{@iteration_count} iterations."
+        puts "found optimum score: #{@best[:score]} for parameters "+
+             "#{@best[:parameters]} in #{@iteration_count} iterations."
       end
       return @best
     end
