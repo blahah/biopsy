@@ -24,25 +24,27 @@ class TestExperiment < Test::Unit::TestCase
       @h.cleanup
     end
 
-    should "fail to init when passed a non existent target" do
+    should 'fail to init when passed a non existent target' do
       assert_raise Biopsy::TargetLoadError do
         Biopsy::Experiment.new('fake_target')
       end
     end
 
-    should "be able to select a valid point from the parameter space" do
+    should 'be able to select a valid point from the parameter space' do
       e = Biopsy::Experiment.new('target_test')
       start_point = e.random_start_point
       start_point.each_pair do |param, value|
-        assert @target.parameters[param].include?(value), "#{value} not in #{@target.parameters[param]}"
+        assert @target.parameters[param].include?(value),
+               "#{value} not in #{@target.parameters[param]}"
       end
     end
 
-    should "be able to select a starting point" do
+    should 'be able to select a starting point' do
       e = Biopsy::Experiment.new('target_test')
       start_point = e.start
       start_point.each_pair do |param, value|
-        assert @target.parameters[param].include?(value), "#{value} not in #{@target.parameters[param]}"
+        assert @target.parameters[param].include?(value),
+               "#{value} not in #{@target.parameters[param]}"
       end
     end
 
@@ -52,12 +54,12 @@ class TestExperiment < Test::Unit::TestCase
       assert_equal s, e.start
     end
 
-    should "automatically select an optimiser if none is specified" do
+    should 'automatically select an optimiser if none is specified' do
       e = Biopsy::Experiment.new('target_test')
       assert e.algorithm.kind_of? Biopsy::TabuSearch
     end
 
-    should "return an optimal set of parameters and score when run" do
+    should 'return an optimal set of parameters and score when run' do
       Dir.chdir @h.tmp_dir do
         e = Biopsy::Experiment.new('target_test', verbosity: :silent)
         known_best = -4
@@ -66,7 +68,11 @@ class TestExperiment < Test::Unit::TestCase
       end
     end
 
-    should "run really quickly when starting from the optimal parameters" do
+    should 'always finish running an experiment' do
+      assert_equal false, true, 'not yet implemented'
+    end
+
+    should 'run really quickly when starting from the optimal parameters' do
       Dir.chdir @h.tmp_dir do
         s = {:a => 4, :b => 4, :c => 4} 
         e = Biopsy::Experiment.new('target_test', start: s, verbosity: :silent)
@@ -76,14 +82,13 @@ class TestExperiment < Test::Unit::TestCase
       end
     end
 
-    should "run using the parameter sweeper (with limit)" do
+    should 'run using the parameter sweeper' do
       Dir.chdir @h.tmp_dir do
-        p = Biopsy::ParameterSweeper.new(@target.parameters, limit: 250)
+        p = Biopsy::ParameterSweeper.new(@target.parameters)
         e = Biopsy::Experiment.new('target_test', algorithm: p, verbosity: :silent)
-        best_found = e.run[:score]
-        assert best_found != nil
+        best_found = e.run[:parameters]
+        assert_equal best_found, {:a=>4, :b=>4, :c=>4}
       end
     end
   end # Experiment context
-
 end # TestExperiment

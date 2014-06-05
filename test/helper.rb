@@ -106,7 +106,7 @@ class TargetTest
   end
 
   def fake_method
-    true
+    :fake_method_success
   end
 
 end
@@ -150,6 +150,24 @@ class TestObjective < Biopsy::ObjectiveFunction
 end
     }
     @objective_path = File.join(@objective_dir, 'test_objective.rb')
+    self.string_dump objective, @objective_path
+  end
+
+  def create_invalid_objective
+    objective = %Q{
+class TestObjective2 < Biopsy::ObjectiveFunction
+
+  require 'yaml'
+
+  def initialize
+    @optimum = 0
+    @max = 0
+    @weighting = 1
+  end
+
+end
+    }
+    @objective_path = File.join(@objective_dir, 'test_objective2.rb')
     self.string_dump objective, @objective_path
   end
 

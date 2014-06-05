@@ -47,8 +47,6 @@ Detailed usage instructions are on the wiki. Here's a quick overview:
 
 ### Optimisation algorithms
 
-Biopsy currently implements 3 optimisation algorithms.
-
 1. Parameter Sweeper - a simple combinatorial parameter sweep, with optional subsampling of the parameter space
 2. Tabu Search - a local search with a long memory that takes the consensus of multiple searchers
 3. SPEA2 - a high performance general-purpose genetic algorithm

@@ -61,8 +61,29 @@ class TestObjectiveHandler < Test::Unit::TestCase
         f.puts values.to_yaml
       end
       Dir.chdir(@h.tmp_dir) do
-        result = oh.run_for_output(nil, {:onlyfile => file})
+        result = oh.run_for_output(nil, 1, nil)
         assert_equal 0, result
+      end
+    end
+
+    should "run an objective and return all the results" do
+      oh = Biopsy::ObjectiveHandler.new @target
+      values = {
+        :a => 4,
+        :b => 4,
+        :c => 4
+      }
+      file = File.expand_path(File.join(@h.tmp_dir, 'output.txt'))
+      File.open(file, 'w') do |f|
+        f.puts values.to_yaml
+      end
+      expected = {:results=> {
+          "TestObjective"=>{:optimum=>0, :max=>0, :weighting=>1, :result=>-0.0}
+        },
+        :reduced => 0.0}
+      Dir.chdir(@h.tmp_dir) do
+        result = oh.run_for_output(nil, 1, 1)
+        assert_equal result, expected
       end
     end
 
@@ -89,6 +110,41 @@ class TestObjectiveHandler < Test::Unit::TestCase
         }
       }
       assert_equal 0.47140452079103173, oh.dimension_reduce(results)
+    end
+
+    should "raise NotImplementedError" do
+      @h.create_invalid_objective
+      oh = Biopsy::ObjectiveHandler.new @target
+      values = {
+        :a => 4,
+        :b => 4,
+        :c => 4
+      }
+      file = File.expand_path(File.join(@h.tmp_dir, 'output.txt'))
+      File.open(file, 'w') do |f|
+        f.puts values.to_yaml
+      end
+      Dir.chdir(@h.tmp_dir) do
+        assert_raise NotImplementedError do
+          result = oh.run_for_output(nil, 1, nil)
+        end
+      end
+
+    end
+
+    should "raise ObjectiveHandlerError" do
+      oh = Biopsy::ObjectiveHandler.new @target
+      values = {}
+      # file = File.expand_path(File.join(@h.tmp_dir, 'output.txt'))
+      # File.open(file, 'w') do |f|
+        # f.puts values.to_yaml
+      # end
+      Dir.chdir(@h.tmp_dir) do
+        assert_raise Biopsy::ObjectiveHandlerError do
+          result = oh.run_for_output(nil, 1, nil)
+        end
+      end
+
     end
 
   end # Experiment context
