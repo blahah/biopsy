@@ -22,5 +22,5 @@ Gem::Specification.new do |gem|
   gem.add_development_dependency 'turn', '~> 0.9'
   gem.add_development_dependency 'simplecov'
   gem.add_development_dependency 'shoulda-context'
-  gem.add_development_dependency 'coveralls', '~> 0.8', '>= 0.8.1'
+  gem.add_development_dependency 'coveralls', '~> 0.8'
 end

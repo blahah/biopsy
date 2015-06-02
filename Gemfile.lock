@@ -92,7 +92,7 @@ PLATFORMS
 
 DEPENDENCIES
   biopsy!
-  coveralls (~> 0.8, >= 0.8.1)
+  coveralls (~> 0.8)
   minitest
   shoulda-context
   simplecov
