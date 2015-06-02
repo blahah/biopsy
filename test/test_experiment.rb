@@ -49,7 +49,7 @@ class TestExperiment < Test::Unit::TestCase
     end
 
     should "respect user's choice of starting point" do
-      s = {:a => 4, :b => 2} 
+      s = {:a => 4, :b => 2}
       e = Biopsy::Experiment.new('target_test', start: s, verbosity: :silent)
       assert_equal s, e.start
     end
@@ -68,13 +68,29 @@ class TestExperiment < Test::Unit::TestCase
       end
     end
 
-    should 'always finish running an experiment' do
-      assert_equal false, true, 'not yet implemented'
+    should 'respect time limits' do
+      # create a slow target
+      target_name = @h.create_valid_target(slow: true)
+      @target = Biopsy::Target.new
+      @target.load_by_name target_name
+      limits = [0.1, 0.2, 0.5, 1]
+      limits.each do |limit|
+        e = Biopsy::Experiment.new('target_test',
+                                   verbosity: :silent, timelimit: limit)
+        start = Time.now
+        e.run
+        finish = Time.now
+        assert (finish - start) < (limit + 0.2)
+      end
+      # reset the target
+      target_name = @h.create_valid_target(slow: false)
+      @target = Biopsy::Target.new
+      @target.load_by_name target_name
     end
 
     should 'run really quickly when starting from the optimal parameters' do
       Dir.chdir @h.tmp_dir do
-        s = {:a => 4, :b => 4, :c => 4} 
+        s = {:a => 4, :b => 4, :c => 4}
         e = Biopsy::Experiment.new('target_test', start: s, verbosity: :silent)
         known_best = -4
         best_found = e.run[:score]

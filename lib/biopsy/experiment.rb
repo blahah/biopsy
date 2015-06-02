@@ -23,10 +23,11 @@ module Biopsy
 
     # Returns a new Experiment
     def initialize(target, options:{}, threads:4, start:nil, algorithm:nil,
-                   verbosity: :quiet)
+                   timelimit:nil, verbosity: :quiet)
       @threads = threads
       @start = start
       @algorithm = algorithm
+      @timelimit = timelimit
       @verbosity = verbosity
       if target.is_a? Target
         @target = target
@@ -78,6 +79,7 @@ module Biopsy
     # are met. On completion, returns the best parameter
     # set.
     def run
+      start_time = Time.now
       in_progress = true
       @algorithm.setup @start
       @current_params = @start
@@ -99,6 +101,9 @@ module Biopsy
         end
         # have we finished?
         in_progress = !@algorithm.finished?
+        if in_progress && !(@timelimit.nil?)
+          in_progress = (Time.now - start_time < @timelimit)
+        end
       end
       @algorithm.write_data if @algorithm.respond_to? :write_data
       unless @verbosity == :silent
@@ -141,7 +146,7 @@ module Biopsy
         puts msg
       end
     end
-    
+
     def cleanup
       # TODO: make this work
       # remove all but essential files

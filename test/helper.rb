@@ -57,14 +57,14 @@ class Helper
           opt: true,
           min: -40,
           max: 40,
-          step: 2
+          step: 5
         },
         :b => {
           type: 'integer',
           opt: true,
           min: 0,
           max: 40,
-          step: 2
+          step: 5
         },
         :c => {
           type: 'integer',
@@ -84,8 +84,9 @@ class Helper
   end
 
   # Create a valid target definition in the target dir
-  def create_valid_target
+  def create_valid_target slow: false
     data = self.target_data
+    data[:slow] = slow
     name = 'target_test'
     @target_path = File.join(@target_dir, name + '.yml')
     self.yaml_dump data, @target_path
@@ -99,6 +100,9 @@ class TargetTest
   require 'yaml'
 
   def run(params)
+    if (params[:slow])
+      sleep 0.1
+    end
     File.open('output.txt', 'w') do |f|
       f.puts(params.to_yaml)
     end
@@ -139,6 +143,7 @@ class TestObjective < Biopsy::ObjectiveFunction
     a = input[:a].to_i
     b = input[:b].to_i
     c = input[:c].to_i
+
     value = - Math.sqrt((a-4)**2) - Math.sqrt((b-4)**2) - Math.sqrt((c-4)**2)
     {
       :optimum => @optimum,
