@@ -4,7 +4,7 @@ require File.expand_path('../lib/biopsy/version', __FILE__)
 
 Gem::Specification.new do |gem|
   gem.name          = 'biopsy'
-  gem.authors       = [ "Richard Smith" ]
+  gem.authors       = [ "Richard Smith-Unna", "Parsa Akbari", "Chris Bournsell" ]
   gem.email         = "rds45@cam.ac.uk"
   gem.homepage      = 'https://github.com/Blahah/biopsy'
   gem.summary       = %q{ framework for optimising any computational pipeline or program }
