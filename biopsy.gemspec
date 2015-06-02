@@ -13,14 +13,14 @@ Gem::Specification.new do |gem|
   gem.files = Dir['Rakefile', '{lib,test}/**/*', 'README*', 'LICENSE*']
   gem.require_paths = %w[ lib ]
 
-  gem.add_dependency 'rake', '~> 10.1'
-  gem.add_dependency 'threach'
-  gem.add_dependency 'rubystats'
-  gem.add_dependency 'statsample'
+  gem.add_dependency 'rake', '~> 10.4', '>= 10.4.2'
+  gem.add_dependency 'threach', '~> 0.2'
+  gem.add_dependency 'rubystats', '~> 0.2', '>= 0.2.3'
+  gem.add_dependency 'statsample', '~> 1.4', '>= 1.4.3'
 
   gem.add_development_dependency 'minitest'
   gem.add_development_dependency 'turn', '~> 0.9'
   gem.add_development_dependency 'simplecov'
   gem.add_development_dependency 'shoulda-context'
-  gem.add_development_dependency 'coveralls', '~> 0.6.7'
+  gem.add_development_dependency 'coveralls', '~> 0.8', '>= 0.8.1'
 end
