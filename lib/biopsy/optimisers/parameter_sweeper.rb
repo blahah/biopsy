@@ -24,11 +24,12 @@ module Biopsy
   class Combinator
 
     include Enumerable
-   
-    def initialize parameters
+
+    def initialize(parameters, id)
       @parameters = parameters
+      @id = id
     end
-   
+
     def generate_combinations(index, opts, &block)
       if index == @parameters.length
         block.call opts.clone
@@ -80,7 +81,7 @@ module Biopsy
       @current = { :parameters => parameters, :score => score }
       self.update_best?
       return @combinator.next
-    rescue 
+    rescue
       @is_finished = true
       return nil
     end

@@ -90,7 +90,7 @@ module Biopsy
 
     def initialize(distributions, max_size, tabu)
       # tabu
-      @tabu = tabu 
+      @tabu = tabu
       # neighbourhood
       @max_size = max_size
       @members = []
@@ -108,7 +108,7 @@ module Biopsy
       n = 0
       begin
         if n >= 100
-          # taking too long to generate a neighbour, 
+          # taking too long to generate a neighbour,
           # loosen the neighbourhood structure so we explore further
           # debug("loosening distributions")
           @distributions.each do |param, dist|
@@ -162,15 +162,16 @@ module Biopsy
     attr_accessor :max_hood_size, :sd_increment_proportion
     attr_accessor :starting_sd_divisor, :backtrack_cutoff, :jump_cutoff
 
-    Thread = Struct.new(:best, :tabu, :distributions, 
-                        :standard_deviations, :recent_scores, 
+    Thread = Struct.new(:best, :tabu, :distributions,
+                        :standard_deviations, :recent_scores,
                         :iterations_since_best, :backtracks,
                         :current, :current_hood, :loaded,
                         :score_history, :best_history)
 
-    def initialize(parameter_ranges, threads=8, limit=nil)
+    def initialize(parameter_ranges, id, threads=8, limit=nil)
 
       @ranges = parameter_ranges
+      @id = id
 
       # solution tracking
       @best = nil
@@ -194,7 +195,7 @@ module Biopsy
       # logging
       @score_history = []
       @best_history = []
-      @log_data = false
+      @log_data = true
       @logfiles = {}
       self.log_setup
 
@@ -323,7 +324,7 @@ module Biopsy
       mean = @ranges[param].index(value)
       range = @ranges[param]
       sd = self.sd_for_param(param, range)
-      @distributions[param] = Biopsy::Distribution.new(mean, 
+      @distributions[param] = Biopsy::Distribution.new(mean,
                                                       range,
                                                       @sd_increment_proportion,
                                                       sd)
@@ -348,14 +349,13 @@ module Biopsy
       end
       if best[:parameters].nil?
         # this should never happen!
-        best = @best        
+        best = @best
       end
       best
     end
 
     def backtrack
       @backtracks += 1.0
-      # debug('backtracked to best')
       @distributions.each_pair { |k, d| d.tighten }
     end
 
@@ -368,8 +368,8 @@ module Biopsy
     # use the gradient of recent best scores to update the distributions
     def adjust_distributions_using_gradient
       return if @recent_scores.length < 3
-      vx = (1..@recent_scores.length).to_a.to_scale
-      vy = @recent_scores.reverse.to_scale
+      vx = (1..@recent_scores.length).to_a.to_numeric
+      vy = @recent_scores.reverse.to_numeric
       r = Statsample::Regression::Simple.new_from_vectors(vx,vy)
       slope = r.b
       if slope > 0
@@ -398,15 +398,17 @@ module Biopsy
       end
     end
 
-    # check termination conditions 
+    # check termination conditions
     # and return true if met
     def finished?
-      return false unless @threads.all? { |t| t.recent_scores.size == @jump_cutoff }
+      return false unless @threads.all? do |t|
+        t.recent_scores.size == @jump_cutoff
+      end
       probabilities = self.recent_scores_combination_test
       n_significant = 0
-      probabilities.each do |mann_u, levene| 
+      probabilities.each do |mann_u, levene|
         if mann_u <= @adjusted_alpha && levene <= @convergence_alpha
-          n_significant += 1 
+          n_significant += 1
         end
       end
       finish = n_significant >= probabilities.size * 0.5
@@ -415,8 +417,8 @@ module Biopsy
     # returns a matrix of correlation probabilities for recent
     # scores between all threads
     def recent_scores_combination_test
-      combinations = 
-      @threads.map{ |t| t.recent_scores.to_scale }.combination(2).to_a
+      combinations =
+      @threads.map{ |t| t.recent_scores.to_numeric }.combination(2).to_a
       combinations.map do |a, b|
         [Statsample::Test.u_mannwhitney(a, b).probability_exact,
          Statsample::Test::Levene.new([a,b]).probability]
@@ -431,10 +433,10 @@ module Biopsy
     def log_setup
       if @log_data
         require 'csv'
-        @logfiles[:standard_deviations] = CSV.open('standard_deviations.csv', 'w')
-        @logfiles[:best] = CSV.open('best.csv', 'w')
-        @logfiles[:score] = CSV.open('score.csv', 'w')
-        @logfiles[:params] = CSV.open('params.csv', 'w')
+        @logfiles[:standard_deviations] = CSV.open("#{@id}_standard_deviations.csv", 'w')
+        @logfiles[:best] = CSV.open("#{@id}_best.csv", 'w')
+        @logfiles[:score] = CSV.open("#{@id}_score.csv", 'w')
+        @logfiles[:params] = CSV.open("#{@id}_params.csv", 'w')
       end
     end
 
@@ -466,13 +468,14 @@ module Biopsy
     end
 
     def random_start_point
-      Hash[@ranges.map { |p, r| [p, r.sample] }] 
+      Hash[@ranges.map { |p, r| [p, r.sample] }]
     end
 
     def write_data
       require 'csv'
-      now = Time.now.to_i
-      CSV.open("../#{now}_scores.csv", "w") do |c|
+      pathmod = Settings.instance.no_tempdirs ? '' : '../'
+      path = File.expand_path("#{pathmod}#{@id}_scores.csv")
+      CSV.open(path, "w") do |c|
         c << %w(iteration thread score best)
         @threads.each_with_index do |t, t_idx|
           sh = t.score_history
@@ -482,8 +485,7 @@ module Biopsy
           end
         end
       end
-      path = File.expand_path("../#{now}_scores.csv")
-      puts "wrote TabuSearch run data to #{path}"
+      # puts "wrote TabuSearch run data to #{path}"
     end
 
   end # TabuSearch

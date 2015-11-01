@@ -30,6 +30,7 @@ module Biopsy
     attr_accessor :sweep_cutoff
     attr_accessor :keep_intermediates
     attr_accessor :gzip_intermediates
+    attr_accessor :no_tempdirs
 
     def initialize
       self.set_defaults
@@ -45,6 +46,7 @@ module Biopsy
       @sweep_cutoff = 100
       @keep_intermediates = false
       @gzip_intermediates = false
+      @no_tempdirs = false
     end
 
     # Loads settings from a YAML config file. If no file is

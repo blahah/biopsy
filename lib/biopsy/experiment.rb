@@ -23,7 +23,7 @@ module Biopsy
 
     # Returns a new Experiment
     def initialize(target, options:{}, threads:4, start:nil, algorithm:nil,
-                   timelimit:nil, verbosity: :quiet)
+                   timelimit:nil, verbosity: :quiet, id:nil)
       @threads = threads
       @start = start
       @algorithm = algorithm
@@ -40,6 +40,7 @@ module Biopsy
       self.select_starting_point
       @scores = {}
       @iteration_count = 0
+      set_id id
     end
 
     # return the set of parameters to evaluate first
@@ -63,9 +64,9 @@ module Biopsy
       max = Settings.instance.sweep_cutoff
       n = @target.count_parameter_permutations
       if n < max
-        @algorithm = ParameterSweeper.new(@target.parameters)
+        @algorithm = ParameterSweeper.new(@target.parameters, @id)
       else
-        @algorithm = TabuSearch.new(@target.parameters)
+        @algorithm = TabuSearch.new(@target.parameters, @id)
       end
     end
 
@@ -83,6 +84,7 @@ module Biopsy
       in_progress = true
       @algorithm.setup @start
       @current_params = @start
+      max_scores = @target.count_parameter_permutations
       while in_progress
         run_iteration
         # update the best result
@@ -100,7 +102,7 @@ module Biopsy
            end
         end
         # have we finished?
-        in_progress = !@algorithm.finished?
+        in_progress = !@algorithm.finished? && @scores.size < max_scores
         if in_progress && !(@timelimit.nil?)
           in_progress = (Time.now - start_time < @timelimit)
         end
@@ -117,25 +119,27 @@ module Biopsy
     # encompassing the program, objective(s) and optimiser.
     # Returns the output of the optimiser.
     def run_iteration
-      # create temp dir
-      Dir.chdir(self.create_tempdir) do
+      param_key = @current_params.to_s
+      result = nil
+      # lookup the result if possible
+      if @scores.key? param_key
+        result = @scores[param_key]
+      else
+        # create temp dir
+        curdir = Dir.pwd
+        Dir.chdir(self.create_tempdir) unless Settings.instance.no_tempdirs
         # run the target
         raw_output = @target.run @current_params.merge(@options)
         # evaluate with objectives
-        param_key = @current_params.to_s
-        result = nil
-        if @scores.key? param_key
-          result = @scores[param_key]
-        else
-          result = @objective.run_for_output(raw_output, @threads, nil)
-          @iteration_count += 1
-          self.print_progress(@iteration_count, @current_params, result, @best)
-        end
+        result = @objective.run_for_output(raw_output, @threads, nil)
+        @iteration_count += 1
+        self.print_progress(@iteration_count, @current_params, result, @best)
         @scores[@current_params.to_s] = result
-        # get next steps from optimiser
-        @current_params = @algorithm.run_one_iteration(@current_params, result)
+        self.cleanup
+        Dir.chdir(curdir) unless Settings.instance.no_tempdirs
       end
-      self.cleanup
+      # get next steps from optimiser
+      @current_params = @algorithm.run_one_iteration(@current_params, result)
     end
 
     def print_progress(iteration, params, score, best)
@@ -148,6 +152,7 @@ module Biopsy
     end
 
     def cleanup
+      return if Settings.instance.no_tempdirs
       # TODO: make this work
       # remove all but essential files
       essential_files = ""
@@ -181,6 +186,17 @@ module Biopsy
       Dir.mkdir(token)
       @last_tempdir = token
       token
+    end
+
+    # set experiment ID with either user provided value, or date-time
+    # as fallback
+    def set_id id
+      @id = id
+      if @id.nil?
+        t = Time.now
+        parts = %w[y m d H M S Z].map{ |p| t.strftime "%#{p}" }
+        @id = "experiment_#{parts.join('_')}"
+      end
     end
 
   end # end of class RunHandler
